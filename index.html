@@ -13,9 +13,21 @@
         <canvas id="gameCanvas"></canvas>
         
         <div id="ui-layer">
-            <div id="score" style="display: none;"></div>
-            
-            <div id="start-screen">
+        <!-- HUD (計時器與生命值) -->
+        <div id="hud" class="hud-container hidden">
+            <div id="timer">00:00.00</div>
+            <div id="lives"></div>
+        </div>
+
+        <!-- 死亡答題畫面 -->
+        <div id="question-screen" class="hidden">
+            <h2 id="question-title">問題</h2>
+            <div id="question-options" class="options-grid"></div>
+        </div>
+
+        <div id="score" class="hidden">00000</div>
+        
+        <div id="start-screen">
                 <h1>迷宮跑酷</h1>
                 <p>探索封閉迷宮，躲避紅色陷阱，尋找綠色終點！</p>
                 <p class="subtitle">MAZE PLATFORMER</p>
@@ -25,6 +37,10 @@
             <div id="game-over-screen" class="hidden">
                 <h2 id="end-title">GAME OVER</h2>
                 <p id="end-msg">你碰到了陷阱...</p>
+                <div id="leaderboard-container" class="hidden">
+                    <h3 class="leaderboard-title">🏆 最佳成績 🏆</h3>
+                    <ul id="leaderboard-list"></ul>
+                </div>
                 <p style="margin-top: 1rem; font-size: 0.9rem;">點擊螢幕重新開始</p>
             </div>
         </div>
@@ -40,6 +56,6 @@
             </div>
         </div>
     </div>
-    <script src="game.js"></script>
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -34,21 +34,17 @@ body {
 
 .game-container {
     position: relative;
-    width: 100%;
-    max-width: 600px; /* Slimmer for vertical gameplay */
-    height: 100%;
-    max-height: 900px;
+    width: 100vw;
+    height: 100vh;
     background: var(--game-bg);
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
 
-/* 僅在桌面大螢幕有圓角 */
-@media (min-width: 650px) and (min-height: 950px) {
+/* 桌機版維持適當大小即可，但不強制限制 */
+@media (min-width: 800px) {
     .game-container {
-        height: 90vh;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        width: 100%;
+        height: 100%;
     }
 }
 
@@ -69,10 +65,8 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    place-items: center;
     z-index: 2;
 }
 
@@ -92,7 +86,8 @@ body {
     backdrop-filter: blur(5px);
 }
 
-#start-screen, #game-over-screen {
+#start-screen, #game-over-screen, #question-screen {
+    grid-area: 1 / 1;
     pointer-events: auto;
     cursor: pointer;
     text-align: center;
@@ -111,7 +106,8 @@ body {
 
 .hidden {
     opacity: 0 !important;
-    pointer-events: none;
+    pointer-events: none !important;
+    visibility: hidden !important;
     transform: scale(0.95) !important;
 }
 
@@ -206,3 +202,112 @@ p {
     width: 70px;
     height: 70px;
 }
+
+/* HUD */
+.hud-container {
+    position: absolute;
+    top: env(safe-area-inset-top, 20px);
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#timer {
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: monospace;
+    color: var(--text-color);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+#lives {
+    display: flex;
+    gap: 10px;
+}
+
+.life-box {
+    width: 24px;
+    height: 24px;
+    background: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+    transition: all 0.3s ease;
+}
+
+.life-box.lost {
+    background: transparent;
+    border: 2px solid var(--accent-color);
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+/* Question Screen Options */
+#question-screen {
+    max-width: 500px;
+}
+
+#question-title {
+    font-size: 1.5rem;
+    line-height: 1.4;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.option-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.option-btn:hover, .option-btn:active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-color);
+    transform: scale(1.02);
+}
+
+/* Leaderboard */
+#leaderboard-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-title {
+    font-size: 1.1rem;
+    color: #fcd34d;
+    margin-bottom: 0.8rem;
+    letter-spacing: 2px;
+}
+
+#leaderboard-list {
+    list-style: none;
+    text-align: left;
+    padding: 0;
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+#leaderboard-list li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+}
+
+#leaderboard-list li.rank-1 { color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.5); }
+#leaderboard-list li.rank-2 { color: #94a3b8; }
+#leaderboard-list li.rank-3 { color: #d97706; }
