@@ -7,19 +7,16 @@ const mobileControls = document.getElementById('mobile-controls');
 const endTitle = document.getElementById('end-title');
 const endMsg = document.getElementById('end-msg');
 
-// 按鈕元素
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 const btnJump = document.getElementById('btn-jump');
 
-// 遊戲狀態 Variables
 let isPlaying = false;
 let isGameOver = false;
 let animationId;
 let cameraX = 0;
 let cameraY = 0;
 
-// 控制狀態
 const keys = { left: false, right: false, jump: false };
 
 function resizeCanvas() {
@@ -30,57 +27,74 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 // --- 地圖系統 (Tilemap) ---
-// 0: 空氣, 1: 牆壁/地板, 2: 陷阱(刺), 3: 終點, S: 起點
+// 0: 空氣, 1: 牆壁/地板, 2: 陷阱(刺), 3: 終點, S: 起點, H: 橫向鋸片, V: 直向鋸片
 const TILE_SIZE = 40;
 const levelMapData = [
-    "1111111111111111111111111111111111111111",
-    "1300010000000010000000000000011000000001",
-    "1111010111111010111111111110011011111101",
-    "1000010000001010000000000010011010000001",
-    "1011111111101011111112211110011010111111",
-    "1000000000101000000011110000011010000001",
-    "1111111110101111111000000111111011111101",
-    "1000000010100000001111111100011000000101",
-    "1011111010111111101000000000011111110101",
-    "1010001010000000101011111111110000000101",
-    "1010101011111110101010000000010111111101",
-    "1010101000000010101010111111010100000001",
-    "1010101111111010101010100001010101111111",
-    "1000100000001000100000101101010101000001",
-    "1111111111101111111111101101010101011111",
-    "1000000000000000000000000001010101000001",
-    "1011111111111111111111111111010111111101",
-    "1010000000000000000000000000010000000001",
-    "1S10111111122222222222222221111111111111",
-    "1111111111111111111111111111111111111111"
+    "1111111111111111111111111111111111111111", // 0
+    "1000000000000000000000000000000000000031", // 1
+    "1000000000000000000000000000000000000001", // 2
+    "1001111111111111111111111111111111111111", // 3 (Floor 4)
+    "1000000000000000000000000000000000000001", // 4
+    "1000000000000000000000000000000000000001", // 5
+    "10000V000V000V000V000V000V000V000V000001", // 6 (V-Saws)
+    "1111111111111111111111111111111111111001", // 7 (Floor 3)
+    "1000000000000000000000000000000000000001", // 8
+    "100000H0000000000H0000000000H00000000001", // 9 (H-Saws mid-air)
+    "10000000000H0000000000H0000000000H000001", // 10(H-Saws ground)
+    "1001111111111111111111111111111111111111", // 11(Floor 2)
+    "1000000000000000000000000000000000000001", // 12
+    "1000000000000000000000000000000000000001", // 13
+    "1000V000V000V000V000V000V000V00000000001", // 14(V-Saws)
+    "1111111111111111111111111111111111111001", // 15(Floor 1)
+    "1000000000000000000000000000000000000001", // 16
+    "1000000000H0000000000H0000000000H0000001", // 17(H-Saws mid-air)
+    "1S000H0000000000H0000000000H000000000001", // 18(H-Saws ground)
+    "1111111111111111111111111111111111111111"  // 19(Ground)
 ];
 const mapHeight = levelMapData.length;
 const mapWidth = levelMapData[0].length;
 
 let startPos = { x: 40, y: 40 };
-for (let r = 0; r < mapHeight; r++) {
-    for (let c = 0; c < mapWidth; c++) {
-        if (levelMapData[r][c] === 'S') {
-            startPos = { x: c * TILE_SIZE, y: r * TILE_SIZE };
+const saws = [];
+
+function parseMap() {
+    saws.length = 0;
+    for (let r = 0; r < mapHeight; r++) {
+        for (let c = 0; c < mapWidth; c++) {
+            const val = levelMapData[r][c];
+            if (val === 'S') {
+                startPos = { x: c * TILE_SIZE, y: r * TILE_SIZE };
+            } else if (val === 'H' || val === 'V') {
+                saws.push({
+                    x: c * TILE_SIZE + 8,
+                    y: r * TILE_SIZE + 8,
+                    type: val,
+                    speed: val === 'H' ? 2 : 2.5,
+                    dir: 1,
+                    size: 24,
+                    rotation: 0
+                });
+            }
         }
     }
 }
 
 function getTile(c, r) {
-    if (r < 0 || r >= mapHeight || c < 0 || c >= mapWidth) return '1'; // 邊界外視為牆壁
-    const val = levelMapData[r][c];
+    if (r < 0 || r >= mapHeight || c < 0 || c >= mapWidth) return '1';
+    let val = levelMapData[r][c];
+    if (['S', 'H', 'V'].includes(val)) val = '0'; // 這些視為空氣
     return val;
 }
 
 // 主角物件
 const player = {
     x: 0, y: 0,
-    width: 24, height: 24, // 比 Tile 小一點方便在通道穿梭
+    width: 24, height: 24,
     vx: 0, vy: 0,
-    maxSpeed: 3.5, // 速度調慢，增加可控性
+    maxSpeed: 4, 
     acceleration: 0.8,
-    friction: 0.7, 
-    jumpForce: 8,
+    friction: 0.8, 
+    jumpForce: 12, // 提高跳躍力，確保能跨樓層
     gravity: 0.4,
     isGrounded: false,
     color: '#38bdf8',
@@ -92,7 +106,6 @@ const player = {
         this.vy = 0;
         this.isGrounded = false;
         
-        // 初始化相機位置在玩家身上
         cameraX = this.x + this.width/2 - canvas.width/2;
         cameraY = this.y + this.height/2 - canvas.height/2;
     },
@@ -110,7 +123,7 @@ const player = {
         if (keys.left) this.vx -= this.acceleration;
         if (keys.right) this.vx += this.acceleration;
         
-        this.vx *= this.friction; // 摩擦力
+        this.vx *= this.friction;
         if (this.vx > this.maxSpeed) this.vx = this.maxSpeed;
         if (this.vx < -this.maxSpeed) this.vx = -this.maxSpeed;
         if (Math.abs(this.vx) < 0.1) this.vx = 0;
@@ -121,7 +134,6 @@ const player = {
         // --- 2. 垂直移動與跳躍 ---
         this.vy += this.gravity;
         
-        // 只有在地上才能跳
         if (keys.jump && this.isGrounded) {
             this.vy = -this.jumpForce;
             this.isGrounded = false;
@@ -129,10 +141,10 @@ const player = {
         }
 
         this.y += this.vy;
-        this.isGrounded = false; // 先假設在空中，碰撞判定後會確認
+        this.isGrounded = false; 
         this.checkCollisionY();
 
-        // --- 3. 陷阱與終點判定 (AABB overlaps) ---
+        // --- 3. 陷阱與終點判定 ---
         const cLeft = Math.floor(this.x / TILE_SIZE);
         const cRight = Math.floor((this.x + this.width - 0.1) / TILE_SIZE);
         const rTop = Math.floor(this.y / TILE_SIZE);
@@ -142,18 +154,7 @@ const player = {
             for (let c = cLeft; c <= cRight; c++) {
                 const tile = getTile(c, r);
                 if (tile === '2') {
-                    // 稍微縮小判定框，給玩家一點容錯
-                    const hitShrink = 4;
-                    const tileX = c * TILE_SIZE;
-                    const tileY = r * TILE_SIZE;
-                    if (
-                        this.x + hitShrink < tileX + TILE_SIZE &&
-                        this.x + this.width - hitShrink > tileX &&
-                        this.y + hitShrink < tileY + TILE_SIZE &&
-                        this.y + this.height - hitShrink > tileY
-                    ) {
-                        triggerGameOver(false);
-                    }
+                    triggerGameOver(false);
                 } else if (tile === '3') {
                     triggerGameOver(true);
                 }
@@ -166,7 +167,6 @@ const player = {
         cameraX += (targetCamX - cameraX) * 0.1;
         cameraY += (targetCamY - cameraY) * 0.1;
         
-        // 限制相機不要超出地圖邊界
         cameraX = Math.max(0, Math.min(cameraX, mapWidth * TILE_SIZE - canvas.width));
         cameraY = Math.max(0, Math.min(cameraY, mapHeight * TILE_SIZE - canvas.height));
     },
@@ -174,18 +174,15 @@ const player = {
     checkCollisionX() {
         const cLeft = Math.floor(this.x / TILE_SIZE);
         const cRight = Math.floor((this.x + this.width - 0.1) / TILE_SIZE);
-        // 為了避免卡角，上下判定稍微內縮
         const rTop = Math.floor((this.y + 2) / TILE_SIZE);
         const rBottom = Math.floor((this.y + this.height - 2) / TILE_SIZE);
 
         if (this.vx > 0) {
-            // 向右移動，檢查右側是否有牆
             if (getTile(cRight, rTop) === '1' || getTile(cRight, rBottom) === '1') {
                 this.x = cRight * TILE_SIZE - this.width;
                 this.vx = 0;
             }
         } else if (this.vx < 0) {
-            // 向左移動，檢查左側是否有牆
             if (getTile(cLeft, rTop) === '1' || getTile(cLeft, rBottom) === '1') {
                 this.x = (cLeft + 1) * TILE_SIZE;
                 this.vx = 0;
@@ -194,31 +191,96 @@ const player = {
     },
 
     checkCollisionY() {
-        // 左右判定稍微內縮
         const cLeft = Math.floor((this.x + 2) / TILE_SIZE);
         const cRight = Math.floor((this.x + this.width - 2) / TILE_SIZE);
         const rTop = Math.floor(this.y / TILE_SIZE);
         const rBottom = Math.floor((this.y + this.height - 0.1) / TILE_SIZE);
 
         if (this.vy > 0) {
-            // 向下移動，檢查下方是否有牆
             if (getTile(cLeft, rBottom) === '1' || getTile(cRight, rBottom) === '1') {
                 this.y = rBottom * TILE_SIZE - this.height;
                 this.vy = 0;
-                this.isGrounded = true; // 踩到地板
+                this.isGrounded = true; 
             }
         } else if (this.vy < 0) {
-            // 向上移動，檢查上方是否有天花板
             if (getTile(cLeft, rTop) === '1' || getTile(cRight, rTop) === '1') {
                 this.y = (rTop + 1) * TILE_SIZE;
-                this.vy = 0; // 撞到天花板掉落
+                this.vy = 0; 
             }
         }
     }
 };
 
+function updateSaws() {
+    for (let s of saws) {
+        if (s.type === 'H') {
+            s.x += s.speed * s.dir;
+            const cLeft = Math.floor(s.x / TILE_SIZE);
+            const cRight = Math.floor((s.x + s.size) / TILE_SIZE);
+            const rTop = Math.floor((s.y + s.size/2) / TILE_SIZE); 
+            if (s.dir > 0 && getTile(cRight, rTop) === '1') {
+                s.dir = -1;
+            } else if (s.dir < 0 && getTile(cLeft, rTop) === '1') {
+                s.dir = 1;
+            }
+        } else if (s.type === 'V') {
+            s.y += s.speed * s.dir;
+            const cCenter = Math.floor((s.x + s.size/2) / TILE_SIZE);
+            const rTop = Math.floor(s.y / TILE_SIZE);
+            const rBottom = Math.floor((s.y + s.size) / TILE_SIZE);
+            if (s.dir > 0 && getTile(cCenter, rBottom) === '1') {
+                s.dir = -1;
+            } else if (s.dir < 0 && getTile(cCenter, rTop) === '1') {
+                s.dir = 1;
+            }
+        }
+        
+        ctx.save();
+        ctx.translate(s.x + s.size/2 - cameraX, s.y + s.size/2 - cameraY);
+        s.rotation += 0.1;
+        ctx.rotate(s.rotation);
+        
+        ctx.fillStyle = '#f43f5e';
+        ctx.shadowColor = '#f43f5e';
+        ctx.shadowBlur = 15;
+        
+        // 畫鋸片主體
+        ctx.beginPath();
+        ctx.arc(0, 0, s.size/2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 畫鋸齒
+        ctx.fillStyle = '#be123c';
+        for (let i = 0; i < 6; i++) {
+            ctx.rotate(Math.PI / 3);
+            ctx.beginPath();
+            ctx.moveTo(-s.size/2 - 2, -3);
+            ctx.lineTo(-s.size/2 - 6, 0);
+            ctx.lineTo(-s.size/2 - 2, 3);
+            ctx.fill();
+        }
+        // 內圈裝飾
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // 碰撞判定
+        const hitShrink = 4;
+        if (
+            player.x + hitShrink < s.x + s.size &&
+            player.x + player.width - hitShrink > s.x &&
+            player.y + hitShrink < s.y + s.size &&
+            player.y + player.height - hitShrink > s.y
+        ) {
+            triggerGameOver(false);
+        }
+    }
+}
+
 function drawWorld() {
-    // 繪製背景網格
     ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
     const bgSize = 40;
@@ -234,7 +296,6 @@ function drawWorld() {
     }
     ctx.stroke();
 
-    // 找出目前畫面可視範圍，只繪製可見的方塊 (Culling)
     const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
     const endCol = Math.min(mapWidth, startCol + Math.ceil(canvas.width / TILE_SIZE) + 1);
     const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
@@ -247,19 +308,15 @@ function drawWorld() {
             const py = r * TILE_SIZE - cameraY;
 
             if (tile === '1') {
-                // 牆壁
-                ctx.fillStyle = '#475569'; // Slate 600
+                ctx.fillStyle = '#475569'; 
                 ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-                // 內陰影裝飾
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
                 ctx.fillRect(px, py + TILE_SIZE - 4, TILE_SIZE, 4);
                 ctx.fillRect(px + TILE_SIZE - 4, py, 4, TILE_SIZE);
             } else if (tile === '2') {
-                // 陷阱 (紅色岩漿/刺)
                 ctx.fillStyle = '#f43f5e';
                 ctx.shadowColor = '#f43f5e';
                 ctx.shadowBlur = 10;
-                // 畫成微小尖刺的感覺
                 ctx.beginPath();
                 ctx.moveTo(px, py + TILE_SIZE);
                 ctx.lineTo(px + TILE_SIZE/2, py + 10);
@@ -267,14 +324,12 @@ function drawWorld() {
                 ctx.fill();
                 ctx.shadowBlur = 0;
             } else if (tile === '3') {
-                // 終點 (綠色傳送門)
                 ctx.fillStyle = '#10b981';
                 ctx.shadowColor = '#10b981';
                 ctx.shadowBlur = 20;
                 ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
                 ctx.shadowBlur = 0;
             } else if (tile === 'S') {
-                // 起點裝飾
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
@@ -332,6 +387,7 @@ function updateParticles() {
 // --- 遊戲流程 ---
 function resetGame() {
     resizeCanvas();
+    parseMap(); // Reload map & saws
     player.init();
     particles.length = 0;
     
@@ -342,7 +398,6 @@ function resetGame() {
     isPlaying = true;
     isGameOver = false;
     
-    // 重設按鍵狀態
     keys.left = false;
     keys.right = false;
     keys.jump = false;
@@ -358,7 +413,7 @@ function triggerGameOver(isWin) {
     
     endTitle.className = isWin ? 'win-title' : 'lose-title';
     endTitle.innerText = isWin ? 'MISSION CLEAR!' : 'GAME OVER';
-    endMsg.innerText = isWin ? '成功逃出迷宮！' : '你碰到了陷阱...';
+    endMsg.innerText = isWin ? '成功逃出迷宮！' : '你碰到了陷阱/鋸片...';
     
     mobileControls.classList.add('hidden');
     
@@ -366,6 +421,7 @@ function triggerGameOver(isWin) {
         if (!isGameOver) return; 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawWorld();
+        updateSaws();
         if (isWin) player.draw();
         updateParticles();
         
@@ -390,6 +446,7 @@ function gameLoop() {
     player.update();
     
     drawWorld();
+    updateSaws();
     player.draw();
     updateParticles();
 
@@ -397,8 +454,10 @@ function gameLoop() {
 }
 
 // 初始畫面繪製
+parseMap();
 player.init();
 drawWorld();
+updateSaws();
 player.draw();
 
 // --- 虛擬按鍵與事件綁定 ---
