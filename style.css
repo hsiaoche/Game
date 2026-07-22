@@ -1,0 +1,145 @@
+:root {
+    --bg-color: #0f172a; /* Slate 900 */
+    --game-bg: #1e293b; /* Slate 800 */
+    --text-color: #f8fafc; /* Slate 50 */
+    --accent-color: #38bdf8; /* Light Blue 400 */
+    --danger-color: #f43f5e; /* Rose 500 */
+    --grid-color: rgba(255, 255, 255, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    /* Disable text selection and mobile tap highlight for a native app feel */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    height: 400px;
+    background: var(--game-bg);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+/* Background gradient for depth */
+.game-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(30,41,59,0) 0%, rgba(15,23,42,0.6) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+#score {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-color);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+#start-screen, #game-over-screen {
+    text-align: center;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 2.5rem 4rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(0);
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px) !important;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+}
+
+h2 {
+    font-size: 2.2rem;
+    color: var(--danger-color);
+    margin-bottom: 1rem;
+    letter-spacing: -1px;
+}
+
+p {
+    font-size: 1rem;
+    color: #cbd5e1;
+}
+
+p strong {
+    color: var(--accent-color);
+}
+
+.subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.75rem;
+    letter-spacing: 4px;
+}
+
+@media (max-width: 800px) {
+    .game-container {
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+}
