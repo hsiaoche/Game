@@ -31,24 +31,52 @@ export class Saw {
         if (!this.active) return;
         
         if (this.type === 'H') {
-            this.x += this.speed * this.dir * dt;
-            const cLeft = Math.floor(this.x / TILE_SIZE);
-            const cRight = Math.floor((this.x + this.size) / TILE_SIZE);
+            let dx = this.speed * this.dir * dt;
+            const steps = Math.ceil(Math.abs(dx) / (TILE_SIZE / 2));
+            const stepDx = dx / steps;
             const rTop = Math.floor((this.y + this.size/2) / TILE_SIZE); 
-            if (this.dir > 0 && getTile(cRight, rTop) === '1') {
-                this.dir = -1;
-            } else if (this.dir < 0 && getTile(cLeft, rTop) === '1') {
-                this.dir = 1;
+            
+            for (let i = 0; i < steps; i++) {
+                this.x += stepDx;
+                if (this.dir > 0) {
+                    const cRight = Math.floor((this.x + this.size) / TILE_SIZE);
+                    if (getTile(cRight, rTop) === '1') {
+                        this.dir = -1;
+                        this.x = cRight * TILE_SIZE - this.size;
+                        break;
+                    }
+                } else if (this.dir < 0) {
+                    const cLeft = Math.floor(this.x / TILE_SIZE);
+                    if (getTile(cLeft, rTop) === '1') {
+                        this.dir = 1;
+                        this.x = (cLeft + 1) * TILE_SIZE;
+                        break;
+                    }
+                }
             }
         } else if (this.type === 'V') {
-            this.y += this.speed * this.dir * dt;
+            let dy = this.speed * this.dir * dt;
+            const steps = Math.ceil(Math.abs(dy) / (TILE_SIZE / 2));
+            const stepDy = dy / steps;
             const cCenter = Math.floor((this.x + this.size/2) / TILE_SIZE);
-            const rTop = Math.floor(this.y / TILE_SIZE);
-            const rBottom = Math.floor((this.y + this.size) / TILE_SIZE);
-            if (this.dir > 0 && getTile(cCenter, rBottom) === '1') {
-                this.dir = -1;
-            } else if (this.dir < 0 && getTile(cCenter, rTop) === '1') {
-                this.dir = 1;
+            
+            for (let i = 0; i < steps; i++) {
+                this.y += stepDy;
+                if (this.dir > 0) {
+                    const rBottom = Math.floor((this.y + this.size) / TILE_SIZE);
+                    if (getTile(cCenter, rBottom) === '1') {
+                        this.dir = -1;
+                        this.y = rBottom * TILE_SIZE - this.size;
+                        break;
+                    }
+                } else if (this.dir < 0) {
+                    const rTop = Math.floor(this.y / TILE_SIZE);
+                    if (getTile(cCenter, rTop) === '1') {
+                        this.dir = 1;
+                        this.y = (rTop + 1) * TILE_SIZE;
+                        break;
+                    }
+                }
             }
         }
         this.rotation += 0.1 * (dt * 60);

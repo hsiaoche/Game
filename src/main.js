@@ -85,9 +85,21 @@ class GameplayScene {
         if (!EntityManager.player) return; // Stop executing if player died and scene changed
         
         const targetCamX = EntityManager.player.x + EntityManager.player.width/2 - canvas.width/2;
-        const targetCamY = EntityManager.player.y + EntityManager.player.height/2 - canvas.height/2;
+        
+        // Vertical Deadzone
+        const playerScreenY = EntityManager.player.y - CameraState.y;
+        const deadzoneTop = canvas.height * 0.35;
+        const deadzoneBottom = canvas.height * 0.65;
+        
+        let targetCamY = CameraState.y;
+        if (playerScreenY < deadzoneTop) {
+            targetCamY = EntityManager.player.y - deadzoneTop;
+        } else if (playerScreenY + EntityManager.player.height > deadzoneBottom) {
+            targetCamY = EntityManager.player.y + EntityManager.player.height - deadzoneBottom;
+        }
+        
         CameraState.x += (targetCamX - CameraState.x) * (0.1 * timeScale);
-        CameraState.y += (targetCamY - CameraState.y) * (0.1 * timeScale);
+        CameraState.y += (targetCamY - CameraState.y) * (0.08 * timeScale);
         
         CameraState.x = Math.max(0, Math.min(CameraState.x, mapWidth * TILE_SIZE - canvas.width));
         CameraState.y = Math.max(0, Math.min(CameraState.y, mapHeight * TILE_SIZE - canvas.height));
