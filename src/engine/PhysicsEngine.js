@@ -1,6 +1,41 @@
-import { getTile, TILE_SIZE } from '../game/Map.js';
+import { getTile, getRawTile, TILE_SIZE } from '../game/Map.js';
+import { EntityManager } from './EntityManager.js';
 
 export const PhysicsEngine = {
+    broadPhase(entity) {
+        const collidables = [];
+        
+        // 1. Map Tiles (9-grid around entity)
+        const cLeft = Math.floor(entity.x / TILE_SIZE);
+        const cRight = Math.floor((entity.x + entity.width - 0.1) / TILE_SIZE);
+        const rTop = Math.floor(entity.y / TILE_SIZE);
+        const rBottom = Math.floor((entity.y + entity.height - 0.1) / TILE_SIZE);
+
+        for (let r = rTop; r <= rBottom; r++) {
+            for (let c = cLeft; c <= cRight; c++) {
+                const rawTile = getRawTile(c, r);
+                if (rawTile === '2' || rawTile === '3') {
+                    collidables.push({
+                        type: rawTile,
+                        hitbox: { x: c * TILE_SIZE, y: r * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE }
+                    });
+                }
+            }
+        }
+        
+        // 2. Saws
+        const saws = EntityManager.saws;
+        for (let s of saws) {
+            const shrink = 4;
+            const sawHitbox = { x: s.x + shrink, y: s.y + shrink, width: s.size - shrink * 2, height: s.size - shrink * 2 };
+            // Simple distance check could be added here for broad phase, but since Saws are few, AABB is fast enough.
+            if (this.checkAABB(entity, sawHitbox)) {
+                 collidables.push({ type: 'SAW', hitbox: sawHitbox });
+            }
+        }
+        
+        return collidables;
+    },
     resolveCollisionX(entity) {
         const rTop = Math.floor((entity.y + 2) / TILE_SIZE);
         const rBottom = Math.floor((entity.y + entity.height - 2) / TILE_SIZE);

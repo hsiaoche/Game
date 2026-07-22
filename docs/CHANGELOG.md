@@ -2,6 +2,33 @@
 
 所有本專案的變更紀錄將遵守 [Semantic Versioning](https://semver.org/)。
 
+## [v1.9.0] - 2026-07-23
+### Refactored
+- Architecture Refactor Phase 5 (UI 系統與資料庫層重構)。
+- 建立 `UIEngine.js`，將所有 `document.getElementById` 和 `innerHTML` 等 DOM 變更操作集中管理。
+- 拆分原先的 `QuestionManager.js`，將負責網路抓取的邏輯獨立至 `QuestionRepository.js`。
+- 建立 `SaveManager.js` 取代 `LeaderboardManager` 來統一管理遊戲的持久化。
+- 建立 `AudioManager.js` 提供基礎音效播放介面。
+
+## [v1.8.0] - 2026-07-23
+### Refactored
+- Architecture Refactor Phase 4 (渲染與地圖系統重構)。
+- 建立 `Renderer.js`, `TileRenderer.js`, `EntityRenderer.js` 將繪圖邏輯從模型物件完全剝離。
+- 引入 Offscreen Canvas 快取技術 (`TileRenderer`) 將地圖渲染效能從 O(N²) 降為 O(1)。
+- 關卡資料 `levels.js` 重構為 JSON 物件格式。
+
+## [v1.7.0] - 2026-07-23
+### Refactored
+- Architecture Refactor Phase 3 (實體與物理層重構)。
+- 建立 `ObjectPool.js` 管理頻繁生成的粒子與鋸片，消除記憶體 GC 壓力。
+- 獨立 `Player.js`, `Saw.js`, `Particle.js`，並為 `PhysicsEngine.js` 實作 Broad Phase。
+
+## [v1.6.0] - 2026-07-23
+### Refactored
+- Architecture Refactor Phase 2 (核心引擎拆分)。
+- 將 `Core.js` God Object 拆解為 `GameLoop.js`, `Time.js`, `GameState.js`, `Camera.js`, `InputManager.js`。
+- 模組化 `GameContext` 與 `CameraState`，全面更新 `main.js` 等相依模組的 Import 邏輯。
+
 ## [v1.5.0] - 2026-07-23
 ### Refactored
 - Architecture Refactor Phase 1 (基礎建設與解耦)。

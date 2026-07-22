@@ -1,6 +1,7 @@
 import { EntityManager } from './EntityManager.js';
-import { Player } from '../game/Entities.js';
+import { Player } from '../game/entities/Player.js';
 import { loadMap } from '../game/Map.js';
+import { Renderer } from './renderer/Renderer.js';
 
 export const LevelManager = {
     currentLevelData: null,
@@ -15,7 +16,9 @@ export const LevelManager = {
     
     resetLevel() {
         EntityManager.init(new Player());
-        const startPos = loadMap(this.currentLevelData, EntityManager.saws);
+        const { startPos, sawConfigs } = loadMap(this.currentLevelData);
+        EntityManager.loadSaws(sawConfigs);
+        Renderer.rebuildCache(this.currentLevelData.layout);
         
         if (!this.initialStartPos) {
             this.initialStartPos = { ...startPos };

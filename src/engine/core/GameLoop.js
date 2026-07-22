@@ -8,10 +8,16 @@ import { canvas, ctx } from './Camera.js';
 
 let currentAnimationId = null;
 
+let frameCount = 0;
+let lastFpsTime = 0;
+
 export const GameLoop = {
+    fps: 0,
     start(updateFn, drawFn) {
         if (currentAnimationId) cancelAnimationFrame(currentAnimationId);
         Time.lastTime = 0;
+        lastFpsTime = 0;
+        frameCount = 0;
         
         const loop = (time) => {
             if (!GameContext.isPlaying) {
@@ -39,6 +45,14 @@ export const GameLoop = {
             if (ctx) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawFn(ctx);
+            }
+            
+            // FPS calculation
+            frameCount++;
+            if (time - lastFpsTime >= 1000) {
+                this.fps = frameCount;
+                frameCount = 0;
+                lastFpsTime = time;
             }
             
             currentAnimationId = requestAnimationFrame(loop);

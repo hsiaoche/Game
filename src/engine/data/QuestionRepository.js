@@ -1,10 +1,12 @@
-export const QuestionManager = {
-    screen: document.getElementById('question-screen'),
-    title: document.getElementById('question-title'),
-    optionsContainer: document.getElementById('question-options'),
+/**
+ * @file QuestionRepository.js
+ * @description 負責題庫資料的獲取與解析，與 UI 完全解耦。
+ */
+
+export const QuestionRepository = {
     questionsList: [],
     
-    async loadQuestions() {
+    async load() {
         try {
             const res = await fetch('./src/data/questions.md');
             const text = await res.text();
@@ -47,33 +49,11 @@ export const QuestionManager = {
             }
         }
     },
-    
-    showQuestion() {
-        return new Promise((resolve) => {
-            this.screen.classList.remove('hidden');
-            
-            if (this.questionsList.length === 0) {
-                resolve(true); // Failsafe
-                return;
-            }
-            
-            const q = this.questionsList[Math.floor(Math.random() * this.questionsList.length)];
-            this.title.innerText = q.question;
-            this.optionsContainer.innerHTML = '';
-            
-            q.options.forEach((optText, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = optText;
-                btn.onclick = () => {
-                    this.screen.classList.add('hidden');
-                    resolve({
-                        isCorrect: idx === q.answerIndex,
-                        correctAnswer: q.options[q.answerIndex]
-                    });
-                };
-                this.optionsContainer.appendChild(btn);
-            });
-        });
+
+    getRandomQuestion() {
+        if (this.questionsList.length === 0) {
+            return null;
+        }
+        return this.questionsList[Math.floor(Math.random() * this.questionsList.length)];
     }
 };

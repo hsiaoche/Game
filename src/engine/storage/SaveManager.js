@@ -1,16 +1,21 @@
-import { LocalStorageAdapter } from './storage/LocalStorageAdapter.js';
+/**
+ * @file SaveManager.js
+ * @description 統一管理遊戲的存檔紀錄與排行榜資料。
+ */
+
+import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 
 const storage = new LocalStorageAdapter();
 
-export const LeaderboardManager = {
-    storageKey: 'maze_platformer_leaderboard',
+export const SaveManager = {
+    leaderboardKey: 'maze_platformer_leaderboard',
     
-    getRecords() {
-        return storage.get(this.storageKey) || [];
+    getLeaderboard() {
+        return storage.get(this.leaderboardKey) || [];
     },
     
     addRecord(gameTime) {
-        const records = this.getRecords();
+        const records = this.getLeaderboard();
         
         const minutes = Math.floor(gameTime / 60).toString().padStart(2, '0');
         const seconds = (gameTime % 60).toFixed(2).padStart(5, '0');
@@ -29,7 +34,7 @@ export const LeaderboardManager = {
         // Keep top 5
         const top5 = records.slice(0, 5);
         
-        storage.set(this.storageKey, top5);
+        storage.set(this.leaderboardKey, top5);
         
         return top5;
     },

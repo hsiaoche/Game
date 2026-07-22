@@ -3,43 +3,27 @@ import { GameContext as state } from './engine/core/GameState.js';
 import { canvas, ctx, CameraState, resizeCanvas } from './engine/core/Camera.js';
 import { keys } from './engine/core/InputManager.js';
 import { GameLoop } from './engine/core/GameLoop.js';
-import { drawWorld, mapWidth, mapHeight, TILE_SIZE } from './game/Map.js';
-import { Player, updateSaws, createDeathParticles } from './game/Entities.js';
+import { mapWidth, mapHeight, TILE_SIZE } from './game/Map.js';
 import { EntityManager } from './engine/EntityManager.js';
+import { Renderer } from './engine/renderer/Renderer.js';
 import { SceneManager } from './engine/SceneManager.js';
 import { initDevOptions, devOptions } from './engine/DevOptions.js';
 import { LevelManager } from './engine/LevelManager.js';
 import { level1 } from './game/levels.js';
-import { QuestionManager } from './engine/QuestionManager.js';
-import { LeaderboardManager } from './engine/LeaderboardManager.js';
+import { UIEngine } from './engine/ui/UIEngine.js';
+import { QuestionRepository } from './engine/data/QuestionRepository.js';
+import { SaveManager } from './engine/storage/SaveManager.js';
+import { AudioManager } from './engine/audio/AudioManager.js';
 import { EventBus, Events } from './engine/EventBus.js';
 import { GameConfig } from './config/gameConfig.js';
 
-const startScreen = document.getElementById('start-screen');
-const gameOverScreen = document.getElementById('game-over-screen');
-const mobileControls = document.getElementById('mobile-controls');
-const endTitle = document.getElementById('end-title');
-const endMsg = document.getElementById('end-msg');
-
-function updateHUD() {
-    const minutes = Math.floor(state.gameTime / 60).toString().padStart(2, '0');
-    const seconds = (state.gameTime % 60).toFixed(2).padStart(5, '0');
-    document.getElementById('timer').innerText = `${minutes}:${seconds}`;
-    
-    const livesContainer = document.getElementById('lives');
-    livesContainer.innerHTML = '';
-    for(let i=0; i<3; i++) {
-        const div = document.createElement('div');
-        div.className = 'life-box' + (i >= state.lives ? ' lost' : '');
-        livesContainer.appendChild(div);
-    }
-}
+// DOM elements are now managed by UIEngine
 
 class MainMenuScene {
     enter() {
-        startScreen.classList.remove('hidden');
-        gameOverScreen.classList.add('hidden');
-        mobileControls.classList.add('hidden');
+        UIEngine.showScreen('start');
+        UIEngine.hideScreen('gameOver');
+        UIEngine.hideScreen('mobileControls');
         state.isPlaying = false;
         
         // Draw static background
@@ -50,11 +34,10 @@ class MainMenuScene {
         CameraState.y = EntityManager.player.y + EntityManager.player.height/2 - canvas.height/2;
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawWorld(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
-        EntityManager.draw(ctx, CameraState.x, CameraState.y);
+        Renderer.draw(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
     }
     exit() {
-        startScreen.classList.add('hidden');
+        UIEngine.hideScreen('start');
         state.isPlaying = true;
     }
     update(dt) {}
@@ -76,19 +59,19 @@ class GameplayScene {
         CameraState.x = EntityManager.player.x + EntityManager.player.width/2 - canvas.width/2;
         CameraState.y = EntityManager.player.y + EntityManager.player.height/2 - canvas.height/2;
         
-        mobileControls.classList.remove('hidden');
-        document.getElementById('hud').classList.remove('hidden');
+        UIEngine.showScreen('mobileControls');
+        UIEngine.showScreen('hud');
         
         keys.left = false;
         keys.right = false;
         keys.jump = false;
     }
     exit() {
-        mobileControls.classList.add('hidden');
+        UIEngine.hideScreen('mobileControls');
     }
     update(dt) {
         state.gameTime += dt * devOptions.speedMultiplier;
-        updateHUD();
+        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES);
         
         let timeScale = dt * 60;
         timeScale *= devOptions.speedMultiplier; 
@@ -97,7 +80,7 @@ class GameplayScene {
             EntityManager.player.update(timeScale, keys);
         }
         
-        updateSaws(dt * devOptions.speedMultiplier);
+        EntityManager.update(dt * devOptions.speedMultiplier);
         
         if (!EntityManager.player) return; // Stop executing if player died and scene changed
         
@@ -110,17 +93,16 @@ class GameplayScene {
         CameraState.y = Math.max(0, Math.min(CameraState.y, mapHeight * TILE_SIZE - canvas.height));
     }
     draw(ctx) {
-        drawWorld(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
-        EntityManager.draw(ctx, CameraState.x, CameraState.y);
-        EntityManager.updateParticles(1 * devOptions.speedMultiplier, ctx, CameraState.x, CameraState.y);
+        Renderer.draw(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
     }
     handleDeath() {
         if (!EntityManager.player || EntityManager.player.isInvincible || devOptions.godMode) return;
         
-        createDeathParticles(EntityManager.player.x + EntityManager.player.width/2, EntityManager.player.y + EntityManager.player.height/2, EntityManager.player.color);
+        EntityManager.spawnExplosion(EntityManager.player.x + EntityManager.player.width/2, EntityManager.player.y + EntityManager.player.height/2, EntityManager.player.color);
+        AudioManager.playSFX('death');
         
         state.lives--;
-        updateHUD();
+        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES);
         
         if (state.lives >= 0) {
             SceneManager.changeScene(new QuestionScene(EntityManager.player.x, EntityManager.player.y));
@@ -139,7 +121,7 @@ class QuestionScene {
         const tempPlayer = EntityManager.player;
         EntityManager.player = null; // Hide player visually
         
-        QuestionManager.showQuestion().then(result => {
+        UIEngine.showQuestion().then(result => {
             EntityManager.player = tempPlayer; // Restore player
             if (result.isCorrect) {
                 EntityManager.player.x = this.deathX;
@@ -155,13 +137,11 @@ class QuestionScene {
     exit() {}
     update(dt) {
         state.gameTime += dt * devOptions.speedMultiplier;
-        updateHUD();
-        updateSaws(dt * devOptions.speedMultiplier);
+        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES);
+        EntityManager.update(dt * devOptions.speedMultiplier);
     }
     draw(ctx) {
-        drawWorld(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
-        EntityManager.draw(ctx, CameraState.x, CameraState.y);
-        EntityManager.updateParticles(1 * devOptions.speedMultiplier, ctx, CameraState.x, CameraState.y);
+        Renderer.draw(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height, false);
     }
 }
 
@@ -171,80 +151,47 @@ class GameOverScene {
         this.deathInfo = deathInfo;
     }
     enter() {
-        document.getElementById('hud').classList.add('hidden');
         if (!this.isWin) {
-            createDeathParticles(EntityManager.player.x + EntityManager.player.width/2, EntityManager.player.y + EntityManager.player.height/2, EntityManager.player.color);
+            EntityManager.spawnExplosion(EntityManager.player.x + EntityManager.player.width/2, EntityManager.player.y + EntityManager.player.height/2, EntityManager.player.color);
+            AudioManager.playSFX('gameover');
+        } else {
+            AudioManager.playSFX('win');
         }
         
-        endTitle.className = this.isWin ? 'win-title' : 'lose-title';
-        endTitle.innerText = this.isWin ? 'MISSION CLEAR!' : 'GAME OVER';
-        
-        const leaderboardContainer = document.getElementById('leaderboard-container');
-        const leaderboardList = document.getElementById('leaderboard-list');
+        let finalTimeStr = null;
+        let topRecords = [];
         
         if (this.isWin) {
-            const finalTimeStr = LeaderboardManager.formatTime(state.gameTime);
-            endMsg.innerHTML = `成功逃出迷宮！<br><span style="color:var(--accent-color); font-weight:bold; font-size:1.2rem; display:inline-block; margin-top:10px;">本次時間: ${finalTimeStr}</span>`;
-            
-            const topRecords = LeaderboardManager.addRecord(state.gameTime);
-            
-            leaderboardList.innerHTML = '';
-            topRecords.forEach((record, index) => {
-                const li = document.createElement('li');
-                li.className = `rank-${index + 1}`;
-                li.innerHTML = `<span>#${index + 1}</span> <span>${record.formatted}</span>`;
-                leaderboardList.appendChild(li);
-            });
-            
-            leaderboardContainer.classList.remove('hidden');
-            gameOverScreen.classList.remove('hidden');
-        } else {
-            if (this.deathInfo && this.deathInfo.reason === 'WRONG_ANSWER') {
-                endMsg.innerHTML = `答錯了！<br>正確答案是：<span style="color:var(--success-color); font-weight:bold; font-size:1.1rem; display:inline-block; margin-top:5px;">${this.deathInfo.correctAnswer}</span>`;
-            } else if (this.deathInfo && this.deathInfo.reason === 'OUT_OF_LIVES') {
-                endMsg.innerHTML = `復活方塊已耗盡...`;
-            } else {
-                endMsg.innerText = '你碰到了陷阱/鋸片...';
-            }
-            leaderboardContainer.classList.add('hidden');
+            finalTimeStr = SaveManager.formatTime(state.gameTime);
+            topRecords = SaveManager.addRecord(state.gameTime);
         }
+        
+        UIEngine.showGameOver(this.isWin, this.deathInfo, finalTimeStr, topRecords);
     }
     exit() {
-        gameOverScreen.classList.add('hidden');
+        UIEngine.hideScreen('gameOver');
     }
     update(dt) {
-        let hasActiveParticles = EntityManager.particles.some(p => p.active);
+        let hasActiveParticles = EntityManager.particlePool ? EntityManager.particlePool.getActiveObjects().length > 0 : false;
         if (!hasActiveParticles && !this.isWin) {
-            gameOverScreen.classList.remove('hidden');
+            UIEngine.showScreen('gameOver');
         }
         
         if (!this.isWin) {
-            updateSaws(dt * devOptions.speedMultiplier);
+            EntityManager.update(dt * devOptions.speedMultiplier);
         }
     }
     draw(ctx) {
-        drawWorld(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height);
-        
-        // 死亡時不畫玩家，通關時畫玩家
-        if (this.isWin) {
-            EntityManager.player.draw(ctx, CameraState.x, CameraState.y);
-        } else {
-            const tempPlayer = EntityManager.player;
-            EntityManager.player = null; // 暫時移除讓 EntityManager 不畫
-            EntityManager.draw(ctx, CameraState.x, CameraState.y);
-            EntityManager.player = tempPlayer;
-        }
-        
-        if(this.isWin) EntityManager.draw(ctx, CameraState.x, CameraState.y);
-        
-        EntityManager.updateParticles(1, ctx, CameraState.x, CameraState.y);
+        Renderer.draw(ctx, CameraState.x, CameraState.y, canvas.width, canvas.height, this.isWin);
     }
 }
 
 function init() {
     Core.init();
     initDevOptions();
-    QuestionManager.loadQuestions(); // 預載入 Markdown 題庫
+    Renderer.init();
+    AudioManager.init();
+    QuestionRepository.load(); // 預載入 Markdown 題庫
     
     // Subscribe to Global Events
     EventBus.on(Events.PLAYER_DEATH, () => {
@@ -273,8 +220,8 @@ function init() {
     
     window.focus(); // Ensure window has focus for keyboard events
     
-    startScreen.addEventListener('pointerdown', handleStartTap);
-    gameOverScreen.addEventListener('pointerdown', handleStartTap);
+    UIEngine.screens.start.addEventListener('pointerdown', handleStartTap);
+    UIEngine.screens.gameOver.addEventListener('pointerdown', handleStartTap);
     window.addEventListener('pointerdown', (e) => {
         if (e.target.tagName !== 'BUTTON') handleStartTap(e);
     });
@@ -294,7 +241,10 @@ function init() {
     // We start the loop once, and it never stops, it just updates the current scene
     state.isPlaying = true; 
     GameLoop.start(
-        (dt) => SceneManager.update(dt),
+        (dt) => {
+            SceneManager.update(dt);
+            UIEngine.updateFPS(GameLoop.fps);
+        },
         (ctx) => SceneManager.draw(ctx)
     );
 }
