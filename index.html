@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>垂直跑酷 Vertical Parkour</title>
-    <meta name="description" content="A minimalist vertical parkour game demo optimized for mobile">
+    <title>迷宮跑酷 Maze Platformer</title>
+    <meta name="description" content="A minimalist maze platformer game demo optimized for mobile">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -13,19 +13,18 @@
         <canvas id="gameCanvas"></canvas>
         
         <div id="ui-layer">
-            <div id="score">Height: 0</div>
+            <div id="score" style="display: none;"></div>
             
             <div id="start-screen">
-                <h1>垂直跑酷</h1>
-                <p>向上跳躍，躲避紅塊，抵達終點！</p>
-                <p class="subtitle">VERTICAL PARKOUR</p>
+                <h1>迷宮跑酷</h1>
+                <p>探索封閉迷宮，躲避紅色陷阱，尋找綠色終點！</p>
+                <p class="subtitle">MAZE PLATFORMER</p>
                 <p style="margin-top: 1.5rem; font-size: 0.9rem;">點擊螢幕 或 按空白鍵開始</p>
             </div>
             
             <div id="game-over-screen" class="hidden">
                 <h2 id="end-title">GAME OVER</h2>
-                <p id="end-msg">你墜落了...</p>
-                <p>到達高度: <span id="final-score">0</span></p>
+                <p id="end-msg">你碰到了陷阱...</p>
                 <p style="margin-top: 1rem; font-size: 0.9rem;">點擊螢幕重新開始</p>
             </div>
         </div>
