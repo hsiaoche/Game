@@ -47,9 +47,9 @@ const player = {
     vx: 0,
     vy: 0,
     speed: 6,
-    jumpForce: 13,
-    gravity: 0.6,
-    friction: 0.8,
+    jumpForce: 12,
+    gravity: 0.5,
+    friction: 0.85,
     isGrounded: false,
     color: '#38bdf8',
 
@@ -155,12 +155,12 @@ function generateLevel() {
     
     // 2. 隨機生成向上的台階
     for (let i = 1; i < TOTAL_PLATFORMS; i++) {
-        // 隨機高度間隔
-        const gapY = Math.random() * 80 + 70; 
+        // 隨機高度間隔 (降低難度：縮小間隔)
+        const gapY = Math.random() * 60 + 60; 
         currentY -= gapY;
 
-        // 隨機寬度
-        const pw = Math.random() * 60 + 50;
+        // 隨機寬度 (降低難度：加寬台階)
+        const pw = Math.random() * 80 + 70;
         
         // 隨機X位置 (確保不會太超出邊界)
         let px = Math.random() * (canvas.width - pw - 40) + 20;
@@ -180,14 +180,14 @@ function generateLevel() {
             type: 'normal'
         });
 
-        // 機率生成威脅 (敵人)
-        if (i > 5 && Math.random() < 0.3) {
+        // 機率生成威脅 (敵人) - 降低生成率與移動速度
+        if (i > 5 && Math.random() < 0.15) {
             enemies.push({
                 x: px + pw/2 - 10,
                 y: currentY - 20,
                 w: 20,
                 h: 20,
-                speed: (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 1.5),
+                speed: (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.8),
                 minX: px,
                 maxX: px + pw - 20
             });
@@ -517,6 +517,21 @@ bindTouchBtn(btnLeft, 'left');
 bindTouchBtn(btnRight, 'right');
 bindTouchBtn(btnJump, 'jump');
 
-// 點擊 UI 重新開始
-startScreen.addEventListener('click', () => { if(!isPlaying) resetGame(); });
-gameOverScreen.addEventListener('click', () => { if(isGameOver) resetGame(); });
+// 點擊 UI 或螢幕任意處重新開始
+function handleStartTap(e) {
+    if(!isPlaying && !isGameOver) resetGame();
+    if(isGameOver) {
+        // 給予微小延遲避免剛死掉連續點擊馬上重開
+        setTimeout(() => resetGame(), 100);
+    }
+}
+startScreen.addEventListener('pointerdown', handleStartTap);
+gameOverScreen.addEventListener('pointerdown', handleStartTap);
+
+// 全域捕捉點擊 (給手機的第二層保障)
+window.addEventListener('pointerdown', (e) => {
+    // 避免點到按鍵時也觸發開始
+    if (e.target.tagName !== 'BUTTON') {
+        handleStartTap(e);
+    }
+});
