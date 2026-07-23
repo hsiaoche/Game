@@ -261,11 +261,13 @@ p {
 /* Question Screen Options */
 #question-screen {
     max-width: 500px;
+    background: rgba(15, 23, 42, 0.95);
 }
 
 #question-title {
-    font-size: 1.5rem;
-    line-height: 1.4;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    margin-bottom: 2rem;
 }
 
 .options-grid {

@@ -2,8 +2,8 @@ import { EntityManager } from './EntityManager.js';
 import { Player } from '../game/entities/Player.js';
 import { loadMap } from '../game/Map.js';
 import { Renderer } from './renderer/Renderer.js';
-
 import { level1, level2, level3 } from '../game/levels.js';
+import { SaveManager } from './storage/SaveManager.js';
 
 export const LevelManager = {
     levels: [level1, level2, level3],
@@ -13,7 +13,12 @@ export const LevelManager = {
     checkpointPos: null,
     
     initGame() {
-        this.currentLevelIndex = 0;
+        const progress = SaveManager.loadProgress();
+        if (progress) {
+            this.currentLevelIndex = progress.levelIndex;
+        } else {
+            this.currentLevelIndex = 0;
+        }
         this.loadCurrentLevel();
     },
     

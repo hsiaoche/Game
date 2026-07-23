@@ -51,9 +51,15 @@ class GameplayScene {
     enter() {
         resizeCanvas();
         if (this.isReset) {
-            state.gameTime = 0;
-            state.lives = GameConfig.INITIAL_LIVES;
             LevelManager.initGame();
+            const progress = SaveManager.loadProgress();
+            if (progress) {
+                state.gameTime = progress.gameTime || 0;
+                state.lives = GameConfig.INITIAL_LIVES;
+            } else {
+                state.gameTime = 0;
+                state.lives = GameConfig.INITIAL_LIVES;
+            }
         }
         
         CameraState.x = EntityManager.player.x + EntityManager.player.width/2 - canvas.width/2;
@@ -215,10 +221,10 @@ function init() {
     EventBus.on(Events.LEVEL_COMPLETE, () => {
         if (SceneManager.currentScene instanceof GameplayScene) {
             if (LevelManager.loadNextLevel()) {
-                // If there's a next level, we just start a new GameplayScene WITHOUT resetting stats
+                SaveManager.saveProgress(LevelManager.currentLevelIndex, state.gameTime);
                 SceneManager.changeScene(new GameplayScene(false));
             } else {
-                // Game completely beaten
+                SaveManager.clearProgress();
                 SceneManager.changeScene(new GameOverScene(true));
             }
         }

@@ -28,11 +28,11 @@ export const QuestionRepository = {
             const lines = block.split('\n').map(l => l.trim()).filter(l => l !== '');
             if (lines.length < 5) continue; // title, question, 4 options (at least)
             
-            const questionText = lines[1];
+            let questionLines = [];
             const options = [];
             let answerIndex = 0;
             
-            for (let i = 2; i < lines.length; i++) {
+            for (let i = 1; i < lines.length; i++) {
                 const line = lines[i];
                 if (line.startsWith('- ')) {
                     if (line.startsWith('- [x] ')) {
@@ -41,11 +41,13 @@ export const QuestionRepository = {
                     } else {
                         options.push(line.substring(2).trim());
                     }
+                } else {
+                    questionLines.push(line);
                 }
             }
             
             if (options.length > 0) {
-                this.questionsList.push({ question: questionText, options, answerIndex });
+                this.questionsList.push({ question: questionLines.join('\n'), options, answerIndex });
             }
         }
     },

@@ -43,5 +43,17 @@ export const SaveManager = {
         const minutes = Math.floor(gameTime / 60).toString().padStart(2, '0');
         const seconds = (gameTime % 60).toFixed(2).padStart(5, '0');
         return `${minutes}:${seconds}`;
+    },
+    
+    saveProgress(levelIndex, gameTime) {
+        storage.set('maze_platformer_progress', { levelIndex, gameTime });
+    },
+    
+    loadProgress() {
+        return storage.get('maze_platformer_progress');
+    },
+    
+    clearProgress() {
+        storage.set('maze_platformer_progress', null);
     }
 };
