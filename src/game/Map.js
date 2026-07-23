@@ -7,7 +7,7 @@ export let mapWidth = 0;
 export function getTile(c, r) {
     if (r < 0 || r >= mapHeight || c < 0 || c >= mapWidth) return '1';
     let val = currentMapData[r][c];
-    if (['S', 'H', 'V', 'C'].includes(val)) val = '0'; // treat as air for physics
+    if (['S', 'H', 'V', 'F', 'C'].includes(val)) val = '0'; // treat as air for physics
     return val;
 }
 
@@ -29,12 +29,12 @@ export function loadMap(mapData) {
             const val = currentMapData[r][c];
             if (val === 'S') {
                 startPos = { x: c * TILE_SIZE, y: r * TILE_SIZE };
-            } else if (val === 'H' || val === 'V') {
+            } else if (val === 'H' || val === 'V' || val === 'F') {
                 sawConfigs.push({
                     x: c * TILE_SIZE + 8,
                     y: r * TILE_SIZE + 8,
-                    type: val,
-                    speed: val === 'H' ? 120 : 150, // pixels per second (adjusted for dt)
+                    type: val === 'F' ? 'H' : val,
+                    speed: val === 'F' ? 0 : (val === 'H' ? 120 : 150), // pixels per second
                     dir: 1,
                     size: 24,
                     rotation: 0

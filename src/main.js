@@ -53,7 +53,7 @@ class GameplayScene {
         if (this.isReset) {
             state.gameTime = 0;
             state.lives = GameConfig.INITIAL_LIVES;
-            LevelManager.resetLevel();
+            LevelManager.initGame();
         }
         
         CameraState.x = EntityManager.player.x + EntityManager.player.width/2 - canvas.width/2;
@@ -71,7 +71,7 @@ class GameplayScene {
     }
     update(dt) {
         state.gameTime += dt * devOptions.speedMultiplier;
-        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES);
+        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES, LevelManager.currentLevelIndex);
         
         let timeScale = dt * 60;
         timeScale *= devOptions.speedMultiplier; 
@@ -214,7 +214,13 @@ function init() {
 
     EventBus.on(Events.LEVEL_COMPLETE, () => {
         if (SceneManager.currentScene instanceof GameplayScene) {
-            SceneManager.changeScene(new GameOverScene(true));
+            if (LevelManager.loadNextLevel()) {
+                // If there's a next level, we just start a new GameplayScene WITHOUT resetting stats
+                SceneManager.changeScene(new GameplayScene(false));
+            } else {
+                // Game completely beaten
+                SceneManager.changeScene(new GameOverScene(true));
+            }
         }
     });
     

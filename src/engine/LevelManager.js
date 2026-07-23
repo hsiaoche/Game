@@ -3,14 +3,40 @@ import { Player } from '../game/entities/Player.js';
 import { loadMap } from '../game/Map.js';
 import { Renderer } from './renderer/Renderer.js';
 
+import { level1, level2, level3 } from '../game/levels.js';
+
 export const LevelManager = {
+    levels: [level1, level2, level3],
+    currentLevelIndex: 0,
     currentLevelData: null,
     initialStartPos: null,
     checkpointPos: null,
     
+    initGame() {
+        this.currentLevelIndex = 0;
+        this.loadCurrentLevel();
+    },
+    
+    loadCurrentLevel() {
+        this.currentLevelData = this.levels[this.currentLevelIndex];
+        this.checkpointPos = null;
+        this.initialStartPos = null;
+        this.resetLevel();
+    },
+    
+    loadNextLevel() {
+        if (this.currentLevelIndex + 1 < this.levels.length) {
+            this.currentLevelIndex++;
+            this.loadCurrentLevel();
+            return true;
+        }
+        return false;
+    },
+    
     loadLevel(levelData) {
         this.currentLevelData = levelData;
         this.checkpointPos = null;
+        this.initialStartPos = null;
         this.resetLevel();
     },
     

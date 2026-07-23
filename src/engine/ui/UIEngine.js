@@ -23,10 +23,15 @@ export const UIEngine = {
         endMsg: document.getElementById('end-msg'),
         leaderboardContainer: document.getElementById('leaderboard-container'),
         leaderboardList: document.getElementById('leaderboard-list'),
-        fpsCounter: document.getElementById('fps-counter')
+        fpsCounter: document.getElementById('fps-counter'),
+        levelIndicator: document.getElementById('level-indicator')
     },
 
-    updateHUD(time, lives, maxLives = 3) {
+    updateHUD(time, lives, maxLives = 3, levelIndex = 0) {
+        if (this.elements.levelIndicator) {
+            this.elements.levelIndicator.innerText = `Level ${levelIndex + 1}`;
+        }
+        
         const minutes = Math.floor(time / 60).toString().padStart(2, '0');
         const seconds = (time % 60).toFixed(2).padStart(5, '0');
         this.elements.timer.innerText = `${minutes}:${seconds}`;
