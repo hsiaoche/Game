@@ -221,6 +221,7 @@ function init() {
     EventBus.on(Events.LEVEL_COMPLETE, () => {
         if (SceneManager.currentScene instanceof GameplayScene) {
             if (LevelManager.loadNextLevel()) {
+                state.lives = GameConfig.INITIAL_LIVES;
                 SaveManager.saveProgress(LevelManager.currentLevelIndex, state.gameTime);
                 SceneManager.changeScene(new GameplayScene(false));
             } else {

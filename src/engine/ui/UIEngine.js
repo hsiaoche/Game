@@ -23,7 +23,6 @@ export const UIEngine = {
         endMsg: document.getElementById('end-msg'),
         leaderboardContainer: document.getElementById('leaderboard-container'),
         leaderboardList: document.getElementById('leaderboard-list'),
-        fpsCounter: document.getElementById('fps-counter'),
         levelIndicator: document.getElementById('level-indicator')
     },
 
@@ -41,20 +40,6 @@ export const UIEngine = {
             const div = document.createElement('div');
             div.className = 'life-box' + (i >= lives ? ' lost' : '');
             this.elements.lives.appendChild(div);
-        }
-    },
-    
-    updateFPS(fps) {
-        if (this.elements.fpsCounter) {
-            this.elements.fpsCounter.innerText = `FPS: ${fps}`;
-            
-            if (fps >= 55) {
-                this.elements.fpsCounter.style.color = '#00ff00';
-            } else if (fps >= 30) {
-                this.elements.fpsCounter.style.color = '#fbbf24';
-            } else {
-                this.elements.fpsCounter.style.color = '#f43f5e';
-            }
         }
     },
 
