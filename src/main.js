@@ -155,7 +155,7 @@ class QuestionScene {
     exit() {}
     update(dt) {
         state.gameTime += dt * devOptions.speedMultiplier;
-        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES);
+        UIEngine.updateHUD(state.gameTime, state.lives, GameConfig.INITIAL_LIVES, LevelManager.currentLevelIndex);
         EntityManager.update(dt * devOptions.speedMultiplier);
     }
     draw(ctx) {

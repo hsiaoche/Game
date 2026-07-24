@@ -2,11 +2,11 @@ import { EntityManager } from './EntityManager.js';
 import { Player } from '../game/entities/Player.js';
 import { loadMap } from '../game/Map.js';
 import { Renderer } from './renderer/Renderer.js';
-import { level1, level2, level3 } from '../game/levels.js';
+import { level1, level2, level3, level4, level5, level6, level7, level8, level9, level10 } from '../game/levels.js';
 import { SaveManager } from './storage/SaveManager.js';
 
 export const LevelManager = {
-    levels: [level1, level2, level3],
+    levels: [level1, level2, level3, level4, level5, level6, level7, level8, level9, level10],
     currentLevelIndex: 0,
     currentLevelData: null,
     initialStartPos: null,
