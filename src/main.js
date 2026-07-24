@@ -268,7 +268,6 @@ function init() {
     GameLoop.start(
         (dt) => {
             SceneManager.update(dt);
-            UIEngine.updateFPS(GameLoop.fps);
         },
         (ctx) => SceneManager.draw(ctx)
     );
