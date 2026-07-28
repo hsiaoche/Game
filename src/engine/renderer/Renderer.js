@@ -4,8 +4,8 @@
  */
 import { TileRenderer } from './TileRenderer.js';
 import { EntityRenderer } from './EntityRenderer.js';
-import { EntityManager } from '../EntityManager.js';
-import { currentMapData } from '../../game/Map.js';
+import { MazeEntityManager } from '../../games/maze/MazeEntityManager.js';
+import { currentMapData } from '../../games/maze/Map.js';
 
 export const Renderer = {
     init() {
@@ -21,18 +21,19 @@ export const Renderer = {
         TileRenderer.draw(ctx, cameraX, cameraY, canvasWidth, canvasHeight);
 
         // 2. Draw Entities (Saws, Particles, Player)
-        const saws = EntityManager.saws;
+        const saws = MazeEntityManager.saws;
         if (saws.length > 0) {
             EntityRenderer.drawSaws(ctx, saws, cameraX, cameraY);
         }
 
-        const particles = EntityManager.particlePool ? EntityManager.particlePool.getActiveObjects() : [];
+        const particles = MazeEntityManager.particlePool ? MazeEntityManager.particlePool.getActiveObjects() : [];
         if (particles.length > 0) {
             EntityRenderer.drawParticles(ctx, particles, cameraX, cameraY);
         }
-
-        if (renderPlayer && EntityManager.player) {
-            EntityRenderer.drawPlayer(ctx, EntityManager.player, cameraX, cameraY);
+        
+        // 4. Player
+        if (renderPlayer && MazeEntityManager.player) {
+            EntityRenderer.drawPlayer(ctx, MazeEntityManager.player, cameraX, cameraY);
         }
     }
 };

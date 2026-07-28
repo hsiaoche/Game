@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>迷宮跑酷 Maze Platformer</title>
-    <meta name="description" content="A minimalist maze platformer game demo optimized for mobile">
+    <title>Educational Game Collection</title>
+    <meta name="description" content="A minimalist educational game collection optimized for mobile">
     <link rel="stylesheet" href="style.css?v=2.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -14,12 +14,36 @@
         
         <div id="ui-layer">
         <!-- HUD (計時器與生命值) -->
-        <div id="hud" class="hud-container hidden">
-            <div class="hud-left">
-                <div id="level-indicator">Level 1</div>
-                <div id="timer">00:00.00</div>
+        <!-- Maze HUD -->
+        <div id="hud" class="hidden">
+            <div id="time-display">Time: 00:00.000</div>
+            <div id="level-indicator">Lv 1</div>
+            <div id="lives-display"></div>
+        </div>
+
+        <!-- Survival HUD -->
+        <div id="survival-hud" class="hidden">
+            <div id="exp-bar">
+                <div id="exp-fill"></div>
             </div>
-            <div id="lives"></div>
+            <div class="survival-stats">
+                <div id="survival-time">00:00</div>
+                <div id="survival-level">Lv. 1</div>
+                <div id="hp-bar-container">
+                    <div id="hp-fill"></div>
+                    <div id="hp-text">100 / 100</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Up Screen -->
+        <div id="level-up-screen" class="hidden">
+            <div class="level-up-container glass-panel">
+                <h2>Level Up!</h2>
+                <div id="level-up-options">
+                    <!-- Options injected here -->
+                </div>
+            </div>
         </div>
 
         <!-- 死亡答題畫面 -->
@@ -30,7 +54,20 @@
 
         <div id="score" class="hidden">00000</div>
         
-        <div id="start-screen">
+        <!-- Game Hub 選單 -->
+        <div id="hub-screen">
+            <h1>Game Hub</h1>
+            <p>教育小遊戲集合</p>
+            <p class="subtitle">EDUCATIONAL GAME COLLECTION</p>
+            <div class="options-grid" style="margin-top: 2rem;">
+                <!-- Phase 2 Complete, Phase 3 enabled -->
+                <button id="btn-play-maze" class="option-btn">迷宮跑酷 (Maze Platformer)</button>
+                <button id="btn-play-survival" class="option-btn">怪獸生存 (Monster Survival)</button>
+                <button id="btn-play-puzzle" class="option-btn" disabled>邏輯解謎 (Logic Puzzle - 敬請期待)</button>
+            </div>
+        </div>
+        
+        <div id="start-screen" class="hidden">
                 <h1>迷宮跑酷</h1>
                 <p>探索封閉迷宮，躲避紅色陷阱，尋找綠色終點！</p>
                 <p class="subtitle">MAZE PLATFORMER</p>

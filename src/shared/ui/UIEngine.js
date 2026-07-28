@@ -7,11 +7,14 @@ import { QuestionRepository } from '../data/QuestionRepository.js';
 
 export const UIEngine = {
     screens: {
+        hub: document.getElementById('hub-screen'),
         start: document.getElementById('start-screen'),
         gameOver: document.getElementById('game-over-screen'),
         question: document.getElementById('question-screen'),
         mobileControls: document.getElementById('mobile-controls'),
-        hud: document.getElementById('hud')
+        hud: document.getElementById('hud'),
+        survivalHud: document.getElementById('survival-hud'),
+        levelUp: document.getElementById('level-up-screen')
     },
     
     elements: {
@@ -23,7 +26,15 @@ export const UIEngine = {
         endMsg: document.getElementById('end-msg'),
         leaderboardContainer: document.getElementById('leaderboard-container'),
         leaderboardList: document.getElementById('leaderboard-list'),
-        levelIndicator: document.getElementById('level-indicator')
+        levelIndicator: document.getElementById('level-indicator'),
+        
+        // Survival UI
+        survivalTime: document.getElementById('survival-time'),
+        survivalLevel: document.getElementById('survival-level'),
+        expFill: document.getElementById('exp-fill'),
+        hpFill: document.getElementById('hp-fill'),
+        hpText: document.getElementById('hp-text'),
+        levelUpOptions: document.getElementById('level-up-options')
     },
 
     updateHUD(time, lives, maxLives = 3, levelIndex = 0) {
@@ -40,6 +51,22 @@ export const UIEngine = {
             const div = document.createElement('div');
             div.className = 'life-box' + (i >= lives ? ' lost' : '');
             this.elements.lives.appendChild(div);
+        }
+    },
+
+    updateSurvivalHUD(timeStr, level, exp, maxExp, hp, maxHp) {
+        if (this.elements.survivalTime) this.elements.survivalTime.innerText = timeStr;
+        if (this.elements.survivalLevel) this.elements.survivalLevel.innerText = `Lv. ${level}`;
+        
+        if (this.elements.expFill) {
+            let pct = (exp / maxExp) * 100;
+            this.elements.expFill.style.width = `${pct}%`;
+        }
+        
+        if (this.elements.hpFill) {
+            let pct = Math.max(0, (hp / maxHp) * 100);
+            this.elements.hpFill.style.width = `${pct}%`;
+            if (this.elements.hpText) this.elements.hpText.innerText = `${Math.ceil(hp)} / ${maxHp}`;
         }
     },
 
@@ -87,6 +114,31 @@ export const UIEngine = {
                     });
                 };
                 this.elements.questionOptions.appendChild(btn);
+            });
+        });
+    },
+
+    showSurvivalLevelUp(options) {
+        return new Promise((resolve) => {
+            this.screens.levelUp.classList.remove('hidden');
+            this.elements.levelUpOptions.innerHTML = '';
+            
+            options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'level-up-btn';
+                btn.innerHTML = `
+                    <div class="skill-name">${opt.name} <span class="skill-level">Lv.${opt.nextLevel}</span></div>
+                    <div class="skill-desc">${opt.description}</div>
+                `;
+                btn.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation(); // prevent handleStartTap in main.js
+                });
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.screens.levelUp.classList.add('hidden');
+                    resolve(opt.id);
+                });
+                this.elements.levelUpOptions.appendChild(btn);
             });
         });
     },

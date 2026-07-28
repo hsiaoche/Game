@@ -8,14 +8,28 @@ import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 const storage = new LocalStorageAdapter();
 
 export const SaveManager = {
-    leaderboardKey: 'maze_platformer_leaderboard',
-    
-    getLeaderboard() {
-        return storage.get(this.leaderboardKey) || [];
+    getLeaderboardKey(gameId) {
+        return `${gameId}_leaderboard`;
     },
     
-    addRecord(gameTime) {
-        const records = this.getLeaderboard();
+    getProgressKey(gameId) {
+        return `${gameId}_progress`;
+    },
+    
+    getData(key) {
+        return storage.get(key);
+    },
+    
+    setData(key, value) {
+        storage.set(key, value);
+    },
+    
+    getLeaderboard(gameId) {
+        return storage.get(this.getLeaderboardKey(gameId)) || [];
+    },
+    
+    addRecord(gameId, gameTime, sortAscending = true) {
+        const records = this.getLeaderboard(gameId);
         
         const minutes = Math.floor(gameTime / 60).toString().padStart(2, '0');
         const seconds = (gameTime % 60).toFixed(2).padStart(5, '0');
@@ -28,13 +42,16 @@ export const SaveManager = {
         };
         
         records.push(newRecord);
-        // Sort ascending (lower time is better)
-        records.sort((a, b) => a.time - b.time);
+        if (sortAscending) {
+            records.sort((a, b) => a.time - b.time); // Lower is better (e.g. speedrun)
+        } else {
+            records.sort((a, b) => b.time - a.time); // Higher is better (e.g. survival time)
+        }
         
         // Keep top 5
         const top5 = records.slice(0, 5);
         
-        storage.set(this.leaderboardKey, top5);
+        storage.set(this.getLeaderboardKey(gameId), top5);
         
         return top5;
     },
@@ -45,15 +62,15 @@ export const SaveManager = {
         return `${minutes}:${seconds}`;
     },
     
-    saveProgress(levelIndex, gameTime) {
-        storage.set('maze_platformer_progress', { levelIndex, gameTime });
+    saveProgress(gameId, data) {
+        storage.set(this.getProgressKey(gameId), data);
     },
     
-    loadProgress() {
-        return storage.get('maze_platformer_progress');
+    loadProgress(gameId) {
+        return storage.get(this.getProgressKey(gameId));
     },
     
-    clearProgress() {
-        storage.set('maze_platformer_progress', null);
+    clearProgress(gameId) {
+        storage.remove(this.getProgressKey(gameId));
     }
 };

@@ -23,18 +23,25 @@ export function loadMap(mapData) {
     
     let startPos = { x: 40, y: 40 };
     const sawConfigs = [];
+    const checkpointConfigs = [];
     
     for (let r = 0; r < mapHeight; r++) {
         for (let c = 0; c < mapWidth; c++) {
             const val = currentMapData[r][c];
             if (val === 'S') {
                 startPos = { x: c * TILE_SIZE, y: r * TILE_SIZE };
+            } else if (val === 'C') {
+                checkpointConfigs.push({
+                    x: c * TILE_SIZE,
+                    y: r * TILE_SIZE,
+                    active: false
+                });
             } else if (val === 'H' || val === 'V' || val === 'F') {
                 sawConfigs.push({
                     x: c * TILE_SIZE + 8,
                     y: r * TILE_SIZE + 8,
                     type: val === 'F' ? 'H' : val,
-                    speed: val === 'F' ? 0 : (val === 'H' ? 120 : 150), // pixels per second
+                    speed: val === 'F' ? 0 : (val === 'H' ? 120 : 150),
                     dir: 1,
                     size: 24,
                     rotation: 0
@@ -42,7 +49,7 @@ export function loadMap(mapData) {
             }
         }
     }
-    return { startPos, sawConfigs };
+    return { startPos, sawConfigs, checkpointConfigs };
 }
 
 

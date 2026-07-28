@@ -1,7 +1,7 @@
-import { getTile, getRawTile, TILE_SIZE } from '../game/Map.js';
-import { EntityManager } from './EntityManager.js';
+import { getTile, getRawTile, TILE_SIZE } from './Map.js';
+import { MazeEntityManager } from './MazeEntityManager.js';
 
-export const PhysicsEngine = {
+export const MazePhysics = {
     broadPhase(entity) {
         const collidables = [];
         
@@ -24,7 +24,7 @@ export const PhysicsEngine = {
         }
         
         // 2. Saws
-        const saws = EntityManager.saws;
+        const saws = MazeEntityManager.saws;
         for (let s of saws) {
             const shrink = 4;
             const sawHitbox = { x: s.x + shrink, y: s.y + shrink, width: s.size - shrink * 2, height: s.size - shrink * 2 };

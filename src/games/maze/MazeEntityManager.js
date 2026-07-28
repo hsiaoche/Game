@@ -2,11 +2,11 @@
  * @file EntityManager.js
  * @description 管理所有遊戲實體，包含玩家、以及透過 ObjectPool 管理的鋸片與粒子特效。
  */
-import { ObjectPool } from './pool/ObjectPool.js';
-import { Particle } from '../game/entities/Particle.js';
-import { Saw } from '../game/entities/Saw.js';
+import { ObjectPool } from '../../engine/pool/ObjectPool.js';
+import { Particle } from './entities/Particle.js';
+import { Saw } from './entities/Saw.js';
 
-export const EntityManager = {
+export const MazeEntityManager = {
     player: null,
     sawPool: null,
     particlePool: null,

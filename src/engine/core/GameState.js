@@ -2,7 +2,7 @@
  * @file GameState.js
  * @description 統一管理遊戲運作時的共享狀態，消除對全域變數的濫用。
  */
-import { GameConfig } from '../../config/gameConfig.js';
+import { GameConfig } from '../../shared/config/gameConfig.js';
 
 export const GameContext = {
     isPlaying: false,

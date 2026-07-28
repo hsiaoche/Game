@@ -2,6 +2,29 @@
 
 所有本專案的變更紀錄將遵守 [Semantic Versioning](https://semver.org/)。
 
+## [v2.0.0-alpha] - 2026-07-28
+### Added
+- **Educational Game Collection Architecture**: 遊戲轉型為教育小遊戲平台。
+- **Game Hub**: 新增 `HubSceneManager` 與主選單介面，允許在不同遊戲間切換。
+- **AchievementManager**: 新增跨遊戲共用的成就系統。
+- **SaveManager 擴充**: 新增 `gameId` 命名空間支援，使不同遊戲（如 maze, survival）可獨立存檔。
+
+### Changed
+- **Directory Restructure**:
+  - 核心模組移至 `src/shared/` 與 `src/engine/`。
+  - Maze 專屬模組移至 `src/games/maze/`，達成完全封裝。
+- **Module Renaming & Decoupling**:
+  - `PhysicsEngine.js` 拆分為 Maze 專用的 `MazePhysics.js`。
+  - `EntityManager.js` 拆分為 Maze 專用的 `MazeEntityManager.js`。
+  - `LevelManager.js` 拆分為 Maze 專用的 `MazeLevelManager.js`。
+  - `SceneManager` 被解耦，Maze 專屬場景移至 `MazeSceneManager.js`。
+
+## [v1.9.1] - 2026-07-28
+### Fixed
+- 修正關卡生成腳本 (fix_levels.cjs)：重新調整 10 個關卡的地形，嚴格限制最大向上跳躍高度為 3 格，並確保向上跳躍的平台間必有水平重疊，保證物理上 100% 可通關。
+- 修正題庫渲染 Bug (`style.css`)：修復因 `-webkit-background-clip: text` 在多行文字下導致漸層失效、後續行數變透明的問題。現在多行題目可正常完整顯示。
+- 修復了切換關卡與復活答題時，HUD 上方層數會錯誤重設回第一層的問題。
+
 ## [v1.9.0] - 2026-07-23
 ### Refactored
 - Architecture Refactor Phase 5 (UI 系統與資料庫層重構)。

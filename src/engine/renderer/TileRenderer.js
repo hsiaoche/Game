@@ -2,7 +2,7 @@
  * @file TileRenderer.js
  * @description 負責靜態地圖的繪製，使用 Offscreen Canvas 快取技術大幅提升效能。
  */
-import { TILE_SIZE, mapWidth, mapHeight } from '../../game/Map.js';
+import { TILE_SIZE, mapWidth, mapHeight, getTile } from '../../games/maze/Map.js';
 
 export const TileRenderer = {
     offscreenCanvas: null,
@@ -51,6 +51,11 @@ export const TileRenderer = {
                     this.ctx.lineTo(px + TILE_SIZE, py + TILE_SIZE);
                     this.ctx.fill();
                     this.ctx.shadowBlur = 0;
+                } else if (tile === 'C') {
+                    this.ctx.fillStyle = '#10b981';
+                    this.ctx.fillRect(px + 10, py + 10, 20, 30);
+                    this.ctx.fillStyle = '#065f46';
+                    this.ctx.fillRect(px + 10, py + 10, 5, 30);
                 } else if (tile === '3') {
                     this.ctx.fillStyle = '#10b981';
                     this.ctx.shadowColor = '#10b981';
