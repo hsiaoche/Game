@@ -7,7 +7,9 @@ import { GameContext } from './GameState.js';
 export const keys = { 
     left: false, 
     right: false, 
-    jump: false 
+    jump: false,
+    aimX: 0,
+    aimY: 0
 };
 
 export const InputManager = {
@@ -39,6 +41,16 @@ export const InputManager = {
         
         window.addEventListener('keyup', handleKeyUp);
 
+        // Desktop Mouse Aiming
+        const canvas = document.getElementById('gameCanvas');
+        window.addEventListener('mousemove', (e) => {
+            if (GameContext.isPlaying) {
+                const rect = canvas.getBoundingClientRect();
+                keys.aimX = e.clientX - rect.left;
+                keys.aimY = e.clientY - rect.top;
+            }
+        });
+
         const bindTouchBtn = (btn, keyName) => {
             if(!btn) return;
             const start = (e) => {
@@ -60,5 +72,23 @@ export const InputManager = {
         bindTouchBtn(btnLeft, 'left');
         bindTouchBtn(btnRight, 'right');
         bindTouchBtn(btnJump, 'jump');
+
+        // Mobile Touch Aiming (Right half of the screen)
+        const handleTouchAim = (e) => {
+            if (GameContext.isPlaying && e.touches.length > 0) {
+                // Find touch on the right side of screen
+                for (let i = 0; i < e.touches.length; i++) {
+                    const touch = e.touches[i];
+                    if (touch.clientX > window.innerWidth / 2) {
+                        const rect = canvas.getBoundingClientRect();
+                        keys.aimX = touch.clientX - rect.left;
+                        keys.aimY = touch.clientY - rect.top;
+                        break;
+                    }
+                }
+            }
+        };
+        window.addEventListener('touchmove', handleTouchAim, { passive: false });
+        window.addEventListener('touchstart', handleTouchAim, { passive: false });
     }
 };

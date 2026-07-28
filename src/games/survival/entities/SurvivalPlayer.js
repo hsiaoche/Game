@@ -36,33 +36,22 @@ export class SurvivalPlayer {
             if (this.invincibleTimer <= 0) this.isInvincible = false;
         }
 
-        // 8-directional movement
+        // 1-directional movement (Horizontal only)
         let dx = 0;
-        let dy = 0;
         if (keys.left) dx -= 1;
         if (keys.right) dx += 1;
-        if (keys.up) dy -= 1;
-        if (keys.down) dy += 1;
-
-        if (dx !== 0 && dy !== 0) {
-            const length = Math.sqrt(dx * dx + dy * dy);
-            dx /= length;
-            dy /= length;
-        }
         
         if (dx > 0) this.facing = 1;
         else if (dx < 0) this.facing = -1;
 
         this.x += dx * this.speed * dt;
-        this.y += dy * this.speed * dt;
 
-        // Screen Boundaries (Lock to bottom half)
+        // Screen Boundaries
         if (this.x < 0) this.x = 0;
         if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
         
-        const topLimit = canvas.height * 0.5;
-        if (this.y < topLimit) this.y = topLimit;
-        if (this.y > canvas.height - this.height - 10) this.y = canvas.height - this.height - 10;
+        // Lock Y to fixed bottom position
+        this.y = canvas.height - this.height - 30;
     }
 
     takeDamage(amount) {

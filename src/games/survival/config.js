@@ -4,7 +4,7 @@ export const SurvivalConfig = {
     PLAYER_SPEED: 180, // pixels per second
     PLAYER_MAX_HP: 100,
     PLAYER_SIZE: 24,
-    EXP_RADIUS: 60, // pickup radius
+    EXP_RADIUS: 150, // magnet radius
     LEVEL_UP_BASE: 10,
     LEVEL_UP_FACTOR: 1.5,
     COLORS: {

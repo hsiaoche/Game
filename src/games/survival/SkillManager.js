@@ -7,38 +7,22 @@ export const SKILLS_DB = {
         description: '自動發射飛彈攻擊最近的敵人',
         maxLevel: 5,
         baseCooldown: 1.0,
-        fire: (level, player) => {
-            const enemies = SurvivalEntityManager.enemyPool.getActiveObjects();
-            if (enemies.length === 0) return;
-            
-            // Find closest enemy
-            let closest = null;
-            let minDist = Infinity;
-            for (let e of enemies) {
-                let dx = e.x - player.x;
-                let dy = e.y - player.y;
-                let d = dx*dx + dy*dy;
-                if (d < minDist) {
-                    minDist = d;
-                    closest = e;
-                }
-            }
-            if (!closest) return;
-            
+        fire: (level, player, aimX, aimY) => {
             let numMissiles = 1 + Math.floor(level / 2);
             let damage = 10 + level * 5;
             
             for (let i = 0; i < numMissiles; i++) {
-                let dx = closest.x - player.x;
-                let dy = closest.y - player.y;
+                let dx = aimX - (player.x + player.width/2);
+                let dy = aimY - (player.y + player.height/2);
                 let dist = Math.sqrt(dx*dx + dy*dy);
-                let vx = 0, vy = 0;
+                let vx = 0, vy = -300; // Default upwards if no aim
+                
                 if (dist > 0) {
-                    // Slight spread for multiple missiles
-                    let angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
+                    let angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.3; // Less spread
                     vx = Math.cos(angle) * 300;
                     vy = Math.sin(angle) * 300;
                 }
+
                 SurvivalEntityManager.spawnProjectile(player.x + player.width/2, player.y + player.height/2, vx, vy, {
                     damage: damage,
                     color: '#38bdf8',
@@ -74,14 +58,24 @@ export const SKILLS_DB = {
         description: '朝玩家面朝方向發射穿透箭',
         maxLevel: 5,
         baseCooldown: 1.5,
-        fire: (level, player) => {
+        fire: (level, player, aimX, aimY) => {
             let numArrows = 1 + Math.floor(level / 3);
             let damage = 15 + level * 8;
             let penetration = 2 + level;
             
+            let dx = aimX - (player.x + player.width/2);
+            let dy = aimY - (player.y + player.height/2);
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            let baseVx = 0, baseVy = -400; // Default upwards
+            if (dist > 0) {
+                baseVx = (dx / dist) * 400;
+                baseVy = (dy / dist) * 400;
+            }
+
             for (let i = 0; i < numArrows; i++) {
-                let vx = player.facing * 400;
-                let vy = (Math.random() - 0.5) * 100;
+                let vx = baseVx;
+                let vy = baseVy + (Math.random() - 0.5) * 50; // Slight parallel spread
                 SurvivalEntityManager.spawnProjectile(player.x + player.width/2, player.y + player.height/2, vx, vy, {
                     damage: damage,
                     color: '#fbbf24',
@@ -102,13 +96,13 @@ export const SkillManager = {
         this.addOrUpgradeSkill('magic_missile');
     },
 
-    update(dt, player) {
+    update(dt, player, aimX, aimY) {
         for (let skillId in this.playerSkills) {
             let pSkill = this.playerSkills[skillId];
             pSkill.cooldown -= dt;
             if (pSkill.cooldown <= 0) {
                 let skillData = SKILLS_DB[skillId];
-                skillData.fire(pSkill.level, player);
+                skillData.fire(pSkill.level, player, aimX, aimY);
                 // Calculate cooldown based on level, maybe add CDR later
                 pSkill.cooldown = skillData.baseCooldown * Math.max(0.2, (1 - pSkill.level * 0.05));
             }

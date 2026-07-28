@@ -24,13 +24,20 @@ export const WaveManager = {
     },
 
     getWaveConfig(time) {
-        // Simple difficulty scaling
+        // Stepped difficulty scaling
         // Every 30 seconds is a "wave"
         const waveIndex = Math.floor(time / 30);
         
-        let interval = Math.max(0.2, 1.0 - waveIndex * 0.1);
-        let hpMult = 1 + waveIndex * 0.5;
-        let speedMult = 1 + waveIndex * 0.1;
+        // Base interval decreases as wave increases
+        let interval = Math.max(0.15, 1.0 - waveIndex * 0.15);
+        
+        // Minor bursts at the start of a wave (time % 30 < 5)
+        if (time % 30 < 5) {
+            interval = interval * 0.5; 
+        }
+
+        let hpMult = Math.pow(1.2, waveIndex); 
+        let speedMult = 1 + waveIndex * 0.05;
         let damageMult = 1 + waveIndex * 0.2;
 
         return {
@@ -38,7 +45,7 @@ export const WaveManager = {
             enemyHp: 10 * hpMult,
             enemySpeed: 100 * speedMult,
             enemyDamage: 10 * damageMult,
-            enemyExp: 1 + Math.floor(waveIndex / 2)
+            enemyExp: 1 + Math.floor(waveIndex / 3)
         };
     },
 

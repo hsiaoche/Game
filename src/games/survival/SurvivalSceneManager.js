@@ -85,7 +85,7 @@ export class SurvivalGameplayScene {
 
         SurvivalEntityManager.update(timeScale, keys, canvas);
         WaveManager.update(timeScale, canvas);
-        SkillManager.update(timeScale, SurvivalEntityManager.player);
+        SkillManager.update(timeScale, SurvivalEntityManager.player, keys.aimX, keys.aimY);
 
         let leveledUp = SurvivalEntityManager.checkCollisions();
         

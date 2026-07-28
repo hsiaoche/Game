@@ -27,16 +27,17 @@ export class ExpGem {
 
         let dx = player.x + player.width/2 - this.x;
         let dy = player.y + player.height/2 - this.y;
+        
+        // Infinite magnet range
+        this.isBeingSucked = true;
+        
         let distSq = dx * dx + dy * dy;
-
-        if (this.isBeingSucked || distSq < SurvivalConfig.EXP_RADIUS * SurvivalConfig.EXP_RADIUS) {
-            this.isBeingSucked = true;
-            let dist = Math.sqrt(distSq);
-            if (dist > 0) {
-                // Sucking speed increases the closer it gets or just very fast
-                this.x += (dx / dist) * 400 * dt;
-                this.y += (dy / dist) * 400 * dt;
-            }
+        let dist = Math.sqrt(distSq);
+        if (dist > 0) {
+            // Gems accelerate slightly the closer they get, base speed 400
+            let speed = 400 + (1000 / Math.max(dist, 10));
+            this.x += (dx / dist) * speed * dt;
+            this.y += (dy / dist) * speed * dt;
         }
     }
 }

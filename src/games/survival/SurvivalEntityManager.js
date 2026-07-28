@@ -95,8 +95,8 @@ export const SurvivalEntityManager = {
         // 1. Player vs Gems (Pickup)
         const activeGems = this.gemPool ? this.gemPool.getActiveObjects() : [];
         for (let g of activeGems) {
-            // Precise pickup hitbox
-            if (this.checkAABB(pBox, { x: g.x - g.size/2, y: g.y - g.size/2, width: g.size, height: g.size })) {
+            // Easier pickup hitbox (negative shrink expands the AABB)
+            if (this.checkAABB(pBox, { x: g.x - g.size/2, y: g.y - g.size/2, width: g.size, height: g.size }, -15)) {
                 if (this.player.gainExp(g.value)) leveledUp = true;
                 g.active = false;
             }
