@@ -32,7 +32,8 @@ export const MazeLevelManager = {
         this.checkpoints = mapInfo.checkpointConfigs || [];
         
         Renderer.rebuildCache(this.currentLevelData.layout);
-        MazeEntityManager.init(new Player(), mapInfo.sawConfigs);
+        MazeEntityManager.init(new Player());
+        MazeEntityManager.loadSaws(mapInfo.sawConfigs);
         MazeEntityManager.player.init(this.currentRespawnPos);
         return true;
     },

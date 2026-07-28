@@ -18,8 +18,8 @@ export const UIEngine = {
     },
     
     elements: {
-        timer: document.getElementById('timer'),
-        lives: document.getElementById('lives'),
+        timer: document.getElementById('time-display'),
+        lives: document.getElementById('lives-display'),
         questionTitle: document.getElementById('question-title'),
         questionOptions: document.getElementById('question-options'),
         endTitle: document.getElementById('end-title'),
