@@ -62,6 +62,10 @@ export class SurvivalGameplayScene {
         
         UIEngine.showScreen('mobileControls');
         UIEngine.showScreen('survivalHud');
+        const jumpBtn = document.getElementById('btn-jump');
+        const joystick = document.getElementById('joystick-right');
+        if(jumpBtn) jumpBtn.classList.add('hidden');
+        if(joystick) joystick.classList.remove('hidden');
         this.updateHUD();
         
         keys.left = false;
@@ -74,6 +78,10 @@ export class SurvivalGameplayScene {
     exit() {
         UIEngine.hideScreen('mobileControls');
         UIEngine.hideScreen('survivalHud');
+        const jumpBtn = document.getElementById('btn-jump');
+        const joystick = document.getElementById('joystick-right');
+        if(jumpBtn) jumpBtn.classList.remove('hidden');
+        if(joystick) joystick.classList.add('hidden');
     }
 
     update(dt) {
@@ -85,7 +93,7 @@ export class SurvivalGameplayScene {
 
         SurvivalEntityManager.update(timeScale, keys, canvas);
         WaveManager.update(timeScale, canvas);
-        SkillManager.update(timeScale, SurvivalEntityManager.player, keys.aimX, keys.aimY);
+        SkillManager.update(timeScale, SurvivalEntityManager.player, keys);
 
         let leveledUp = SurvivalEntityManager.checkCollisions();
         

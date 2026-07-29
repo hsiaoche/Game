@@ -8,8 +8,12 @@ export const keys = {
     left: false, 
     right: false, 
     jump: false,
+    up: false,
+    down: false,
     aimX: 0,
-    aimY: 0
+    aimY: 0,
+    aimDx: 0,
+    aimDy: 0
 };
 
 export const InputManager = {
@@ -73,10 +77,46 @@ export const InputManager = {
         bindTouchBtn(btnRight, 'right');
         bindTouchBtn(btnJump, 'jump');
 
-        // Mobile Touch Aiming (Right half of the screen)
+        // Mobile Touch Aiming (Right half of the screen fallback + Joystick)
+        const joystickBase = document.getElementById('joystick-right');
+        const joystickKnob = document.getElementById('joystick-knob');
+        let activeTouchId = null;
+
+        const updateJoystick = (e, touch) => {
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            
+            const R = rect.width / 2;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist > R) {
+                dx = (dx / dist) * R;
+                dy = (dy / dist) * R;
+            }
+            
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            
+            keys.aimDx = dx;
+            keys.aimDy = dy;
+        };
+        
+        const resetJoystick = () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+            keys.aimDx = 0;
+            keys.aimDy = 0;
+            activeTouchId = null;
+        };
+
         const handleTouchAim = (e) => {
             if (GameContext.isPlaying && e.touches.length > 0) {
-                // Find touch on the right side of screen
+                // If joystick is visible, prefer it over screen aiming
+                if (joystickBase && !joystickBase.classList.contains('hidden')) {
+                    return; // joystick handles itself
+                }
                 for (let i = 0; i < e.touches.length; i++) {
                     const touch = e.touches[i];
                     if (touch.clientX > window.innerWidth / 2) {
@@ -88,6 +128,46 @@ export const InputManager = {
                 }
             }
         };
+
+        if (joystickBase) {
+            joystickBase.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                activeTouchId = touch.identifier;
+                updateJoystick(e, touch);
+            }, { passive: false });
+
+            joystickBase.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) {
+                        updateJoystick(e, e.changedTouches[i]);
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            joystickBase.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            }, { passive: false });
+            
+            joystickBase.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeTouchId) {
+                        resetJoystick();
+                        break;
+                    }
+                }
+            }, { passive: false });
+        }
+
         window.addEventListener('touchmove', handleTouchAim, { passive: false });
         window.addEventListener('touchstart', handleTouchAim, { passive: false });
     }
