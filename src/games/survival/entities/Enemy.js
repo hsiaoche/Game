@@ -12,6 +12,7 @@ export class Enemy {
         this.color = '#f43f5e';
         this.expValue = 1;
         this.hitFlashTimer = 0;
+        this.isBoss = false;
         
         // Knockback
         this.kbX = 0;
@@ -30,6 +31,7 @@ export class Enemy {
         this.width = typeConfig.size || 24;
         this.height = typeConfig.size || 24;
         this.expValue = typeConfig.exp || 1;
+        this.isBoss = typeConfig.isBoss || false;
         this.hitFlashTimer = 0;
         this.kbX = 0;
         this.kbY = 0;

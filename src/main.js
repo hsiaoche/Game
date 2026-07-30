@@ -60,7 +60,7 @@ function init() {
     
     document.getElementById('btn-play-maze').addEventListener('click', () => {
         if (SceneManager.currentScene instanceof HubScene) {
-            SceneManager.changeScene(new MainMenuScene());
+            SceneManager.changeScene(new MazeGameplayScene(true));
         }
     });
 

@@ -13,7 +13,9 @@ export const keys = {
     aimX: 0,
     aimY: 0,
     aimDx: 0,
-    aimDy: 0
+    aimDy: 0,
+    moveDx: 0, // From left joystick
+    moveDy: 0
 };
 
 export const InputManager = {
@@ -77,44 +79,94 @@ export const InputManager = {
         bindTouchBtn(btnRight, 'right');
         bindTouchBtn(btnJump, 'jump');
 
-        // Mobile Touch Aiming (Right half of the screen fallback + Joystick)
-        const joystickBase = document.getElementById('joystick-right');
-        const joystickKnob = document.getElementById('joystick-knob');
-        let activeTouchId = null;
+        // Mobile Touch Aiming and Movement Joysticks
+        const joystickRight = document.getElementById('joystick-right');
+        const joystickRightKnob = document.getElementById('joystick-knob');
+        const joystickLeft = document.getElementById('joystick-left');
+        const joystickLeftKnob = document.getElementById('joystick-left-knob');
+        let rightTouchId = null;
+        let leftTouchId = null;
 
-        const updateJoystick = (e, touch) => {
-            const rect = joystickBase.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+        const setupJoystick = (base, knob, callback, resetCallback) => {
+            if (!base) return;
             
-            let dx = touch.clientX - centerX;
-            let dy = touch.clientY - centerY;
+            let activeId = null;
             
-            const R = rect.width / 2;
-            const dist = Math.sqrt(dx*dx + dy*dy);
+            const update = (e, touch) => {
+                const rect = base.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                
+                const R = rect.width / 2;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist > R) {
+                    dx = (dx / dist) * R;
+                    dy = (dy / dist) * R;
+                }
+                
+                if(knob) knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                callback(dx, dy);
+            };
             
-            if (dist > R) {
-                dx = (dx / dist) * R;
-                dy = (dy / dist) * R;
-            }
-            
-            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            
-            keys.aimDx = dx;
-            keys.aimDy = dy;
+            const reset = () => {
+                if(knob) knob.style.transform = `translate(-50%, -50%)`;
+                resetCallback();
+                activeId = null;
+            };
+
+            base.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                activeId = touch.identifier;
+                update(e, touch);
+            }, { passive: false });
+
+            base.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeId) {
+                        update(e, e.changedTouches[i]);
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            const handleEnd = (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === activeId) {
+                        reset();
+                        break;
+                    }
+                }
+            };
+
+            base.addEventListener('touchend', handleEnd, { passive: false });
+            base.addEventListener('touchcancel', handleEnd, { passive: false });
         };
-        
-        const resetJoystick = () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-            keys.aimDx = 0;
-            keys.aimDy = 0;
-            activeTouchId = null;
-        };
+
+        // Right Joystick (Aim)
+        setupJoystick(joystickRight, joystickRightKnob, 
+            (dx, dy) => { keys.aimDx = dx; keys.aimDy = dy; },
+            () => { keys.aimDx = 0; keys.aimDy = 0; }
+        );
+
+        // Left Joystick (Movement)
+        setupJoystick(joystickLeft, joystickLeftKnob, 
+            (dx, dy) => { keys.moveDx = dx; keys.moveDy = dy; },
+            () => { keys.moveDx = 0; keys.moveDy = 0; }
+        );
+
+
 
         const handleTouchAim = (e) => {
             if (GameContext.isPlaying && e.touches.length > 0) {
                 // If joystick is visible, prefer it over screen aiming
-                if (joystickBase && !joystickBase.classList.contains('hidden')) {
+                if (joystickRight && !joystickRight.classList.contains('hidden')) {
                     return; // joystick handles itself
                 }
                 for (let i = 0; i < e.touches.length; i++) {
@@ -128,45 +180,6 @@ export const InputManager = {
                 }
             }
         };
-
-        if (joystickBase) {
-            joystickBase.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.changedTouches[0];
-                activeTouchId = touch.identifier;
-                updateJoystick(e, touch);
-            }, { passive: false });
-
-            joystickBase.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeTouchId) {
-                        updateJoystick(e, e.changedTouches[i]);
-                        break;
-                    }
-                }
-            }, { passive: false });
-
-            joystickBase.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeTouchId) {
-                        resetJoystick();
-                        break;
-                    }
-                }
-            }, { passive: false });
-            
-            joystickBase.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === activeTouchId) {
-                        resetJoystick();
-                        break;
-                    }
-                }
-            }, { passive: false });
-        }
 
         window.addEventListener('touchmove', handleTouchAim, { passive: false });
         window.addEventListener('touchstart', handleTouchAim, { passive: false });

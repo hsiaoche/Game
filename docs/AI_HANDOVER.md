@@ -1,30 +1,42 @@
-# AI 開發交接文件 (AI Handover)
+# AI 開發交接文件
 
-這份文件用於確保未來的 AI 助手能夠在最短時間內了解專案脈絡，避免破壞現有架構。
+本文件旨在為 AI 開發助手提供專案的核心脈絡、架構限制與開發慣例，確保後續擴充與重構能保持一致性。
 
-## 📍 目前專案狀態
-目前處於 **Architecture Refactoring Phase 5 (UI 系統與資料庫層)** 完成狀態。
-遊戲的重構五大階段已經全部結束，專案架構符合現代化標準，沒有嚴重的緊耦合邏輯。
+## 專案背景與願景
 
-## 🛠️ 目前工作進度
-- [x] Phase 1 完工：導入 EventBus 解決耦合、抽離 Config 消除 Magic Number、實作 StorageAdapter 隔離 localStorage 存取。
-- [x] Phase 2 完工：將 God Object `Core.js` 拆分為 `GameLoop.js`, `Time.js`, `GameState.js`, `Camera.js`, `InputManager.js`。
-- [x] Phase 3 完工：導入 Object Pool 模式，拆分 `Player`, `Saw`, `Particle` 為獨立實體，並將物理判定優化為 Broad/Narrow Phase。
-- [x] Phase 4 完工：將繪圖邏輯從實體中分離，建立 `Renderer` 抽象層，並實作靜態地圖 Offscreen Canvas 快取，渲染效能巨幅提升。
-- [x] Phase 5 完工：建立 `UIEngine` 將純 DOM 操作與遊戲邏輯脫鉤，建立 `QuestionRepository` 與 `SaveManager` 負責資料層持久化，建立 `AudioManager` 音效管理介面。
+這是一個「教育小遊戲合集 (Educational Game Collection)」。
+目標是透過不同的輕量級 HTML5 Canvas 遊戲，將教育問答機制（如玩家死亡時需答題復活）融入遊戲循環中。
+目前包含兩款核心遊戲：
+1. **迷宮跑酷 (Maze Platformer)**：2D 橫向卷軸解謎平台跳躍遊戲。
+2. **怪獸生存 (Monster Survival)**：限制為 1D 橫向移動、2D 游標瞄準的生存射擊遊戲。
 
-## 🚀 下一步 (Next Steps)
-- 重構完成。可準備進入下個特徵開發階段 (例如：關卡編輯器、手把支援)。
+## 技術棧與架構限制
 
-## 🚫 不可修改項目 (Strict Rules)
-1. 嚴禁使用大型 Framework (如 React, Vue, Phaser)。
-2. 嚴禁加入 Server 端邏輯或關聯式資料庫。
-3. 嚴禁一次性全盤重寫。必須遵循 **Incremental Refactoring** 精神。
-4. 任何架構變更必須同步更新本 `docs/` 資料夾下的所有文件。
+- **純原生開發 (Vanilla JS)**：不使用 React, Vue, Phaser 或任何大型第三方遊戲框架。
+- **模組系統 (ES Modules)**：全面採用原生 ESM (`import` / `export`)。
+- **無建置流程 (No Build Tools)**：為了維持輕量化與易於部署，目前未導入 Webpack 或 Vite 進行打包或轉譯。開發時請直接撰寫瀏覽器可原生執行的語法。
+- **狀態機架構 (Scene-Based)**：遊戲的切換依賴 `SceneManager.js` 進行場景流轉（例如：HubScene -> GameplayScene -> GameOverScene）。
+- **依賴注入與全域狀態**：目前依賴許多靜態物件 (Static Singletons，如 `SurvivalEntityManager`) 儲存狀態，這在未來重構中已被列為技術債，新增功能時應盡量避免加重全域狀態的耦合。
 
-## 🧠 AI 注意事項 (Notes for Future AI)
-- 本專案採用 **Scene-Based Architecture** 與 **Event-Driven (Pub/Sub)** 混合架構。
-- 若需擴充新事件，請定義於 `src/engine/EventBus.js`。
-- 若需增加物理常數，請定義於 `src/config/physicsConfig.js`。
-- 切勿直接操作 `localStorage`，請透過 `StorageAdapter` 介面。
-- ⚠️ **關卡設計限制**：在 `levels.js` 或關卡生成器中，向上跳躍的垂直高度**絕對不可超過 3 格**，且起跳平台與目標平台之間必須要有**水平重疊**（或緊貼），否則玩家將無法在空中完成同時上升與水平橫移的操作，導致關卡無法通關。
+## 行動優先與輸入處理
+
+- 遊戲必須支援跨平台操作。所有移動與行動設計必須考量到虛擬搖桿與按鈕。
+- DOM 中的 `#mobile-controls` (包含 `btn-jump`, `joystick-left`, `joystick-right`) 受 `InputManager.js` 統一監聽，並將其轉換為虛擬的按鍵狀態 (`keys.left`, `keys.right`, 等)。
+- 擴充任何需操作的功能時，必須同步處理鍵盤與觸控螢幕的邊界情況。
+
+## 現有系統狀態 (Phase 3)
+
+專案近期完成了核心引擎的抽離與怪獸生存機制的重構：
+- **UI 與渲染分離**：畫布繪製 (Canvas) 與 HUD 顯示 (DOM) 已分離，HUD 交由 `UIEngine.js` 統一管理。
+- **怪獸生存系統**：
+  - 導入了資料驅動的技能系統 (`SkillsDB.js` 與 `SkillManager.js`)。
+  - 經驗值 (EXP) 採用重力掉落與磁吸機制。
+  - 導入 Wave 難度曲線與 Wave 5 的 Boss 生成邏輯 (`WaveManager.js`)。
+- **迷宮跑酷**：完成基礎物理引擎調校，並建立了基於字串陣列的關卡解析器。
+
+## 待解決的重要開發任務
+
+在您接手開發時，請留意以下已知的架構缺陷，並在適當時機進行**漸進式重構 (Incremental Refactoring)**：
+1. **解除 God Object**：`SurvivalSceneManager.js` 等場景管理器目前承擔了過多的渲染與 DOM 綁定職責。
+2. **解除 Singleton 依賴**：Manager 應該要能被安全地初始化與銷毀，避免多次進入遊戲時發生狀態殘留的 Bug。
+3. **消除 UI DOM Thrashing**：優化 `UIEngine.updateHUD`，避免每幀無條件更新 DOM。

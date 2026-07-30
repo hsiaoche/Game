@@ -12,6 +12,7 @@ import { SurvivalConfig } from './config.js';
 import { SurvivalEntityManager } from './SurvivalEntityManager.js';
 import { WaveManager } from './WaveManager.js';
 import { SkillManager } from './SkillManager.js';
+import { SKILLS_DB } from './data/SkillsDB.js';
 
 function drawSurvivalGrid(ctx, cameraX, cameraY) {
     ctx.fillStyle = SurvivalConfig.COLORS.BG;
@@ -35,16 +36,13 @@ function drawSurvivalGrid(ctx, cameraX, cameraY) {
     }
     ctx.stroke();
 
-    // Draw arena boundaries if visible
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(-cameraX, -cameraY, SurvivalConfig.ARENA_WIDTH, SurvivalConfig.ARENA_HEIGHT);
 }
 
 export class SurvivalGameplayScene {
     constructor(isReset = true) {
         this.isReset = isReset;
         this.isLevelingUp = false;
+        this.isPaused = false;
     }
 
     enter() {
@@ -62,10 +60,7 @@ export class SurvivalGameplayScene {
         
         UIEngine.showScreen('mobileControls');
         UIEngine.showScreen('survivalHud');
-        const jumpBtn = document.getElementById('btn-jump');
-        const joystick = document.getElementById('joystick-right');
-        if(jumpBtn) jumpBtn.classList.add('hidden');
-        if(joystick) joystick.classList.remove('hidden');
+        UIEngine.setupSurvivalControls();
         this.updateHUD();
         
         keys.left = false;
@@ -73,19 +68,31 @@ export class SurvivalGameplayScene {
         keys.up = false;
         keys.down = false;
         this.isLevelingUp = false;
+        this.isPaused = false;
+        
+        // Pause Button Setup
+        UIEngine.bindPauseButton(() => {
+            if (this.isLevelingUp || this.isPaused) return; // Don't pause during level up
+            this.isPaused = true;
+            UIEngine.showPauseScreen(
+                () => { this.isPaused = false; }, // Resume
+                () => { 
+                    import('../hub/HubSceneManager.js').then(module => {
+                        SceneManager.changeScene(new module.HubScene());
+                    }); 
+                } // Quit
+            );
+        });
     }
 
     exit() {
         UIEngine.hideScreen('mobileControls');
         UIEngine.hideScreen('survivalHud');
-        const jumpBtn = document.getElementById('btn-jump');
-        const joystick = document.getElementById('joystick-right');
-        if(jumpBtn) jumpBtn.classList.remove('hidden');
-        if(joystick) joystick.classList.add('hidden');
+        UIEngine.teardownSurvivalControls();
     }
 
     update(dt) {
-        if (this.isLevelingUp) return;
+        if (this.isLevelingUp || this.isPaused) return;
 
         state.gameTime += dt * devOptions.speedMultiplier;
         
@@ -99,6 +106,11 @@ export class SurvivalGameplayScene {
         
         if (SurvivalEntityManager.player.hp <= 0 && !devOptions.godMode) {
             this.handleDeath();
+            return;
+        }
+        
+        if (SurvivalEntityManager.bossDefeated) {
+            this.handleVictory();
             return;
         }
 
@@ -185,9 +197,21 @@ export class SurvivalGameplayScene {
         const p = SurvivalEntityManager.player;
         if (!p) return;
         
-        // We will implement SurvivalUIEngine later, but for now use DOM directly or via UIEngine
         const timeStr = SaveManager.formatTime(state.gameTime);
-        UIEngine.updateSurvivalHUD(timeStr, p.level, p.exp, p.expToNextLevel, p.hp, p.maxHp);
+        
+        // Get active skills
+        const activeSkills = [];
+        for (let key in SkillManager.playerSkills) {
+            const sd = SKILLS_DB[key];
+            if (sd) {
+                activeSkills.push({
+                    name: sd.name,
+                    level: SkillManager.playerSkills[key].level
+                });
+            }
+        }
+
+        UIEngine.updateSurvivalHUD(timeStr, p.level, p.exp, p.expToNextLevel, p.hp, p.maxHp, activeSkills);
     }
 
     handleDeath() {
@@ -195,6 +219,10 @@ export class SurvivalGameplayScene {
         AudioManager.playSFX('death');
         
         SceneManager.changeScene(new SurvivalQuestionScene(SurvivalEntityManager.player.x, SurvivalEntityManager.player.y));
+    }
+
+    handleVictory() {
+        SceneManager.changeScene(new SurvivalGameOverScene(true));
     }
 
     handleLevelUp() {

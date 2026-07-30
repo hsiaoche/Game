@@ -37,18 +37,46 @@ export class SurvivalPlayer {
         }
 
         // 1-directional movement (Horizontal only)
-        let dx = 0;
-        if (keys.left) dx -= 1;
-        if (keys.right) dx += 1;
+        let inputDx = 0;
+        if (keys.left) inputDx -= 1;
+        if (keys.right) inputDx += 1;
         
-        if (dx > 0) this.facing = 1;
-        else if (dx < 0) this.facing = -1;
+        // Add left joystick support
+        if (Math.abs(keys.moveDx) > 0) {
+            inputDx = keys.moveDx / 50; // Normalize somewhat based on knob radius
+            if (inputDx > 1) inputDx = 1;
+            if (inputDx < -1) inputDx = -1;
+        }
+        
+        if (inputDx > 0) this.facing = 1;
+        else if (inputDx < 0) this.facing = -1;
 
-        this.x += dx * this.speed * dt;
+        // Apply acceleration
+        if (inputDx !== 0) {
+            this.vx += inputDx * SurvivalConfig.PLAYER_ACCEL * dt;
+        } else {
+            // Apply friction
+            this.vx *= Math.pow(SurvivalConfig.PLAYER_FRICTION, dt * 60);
+        }
+        
+        // Clamp speed
+        if (this.vx > this.speed) this.vx = this.speed;
+        if (this.vx < -this.speed) this.vx = -this.speed;
+        
+        // Stop completely if very slow
+        if (Math.abs(this.vx) < 5 && inputDx === 0) this.vx = 0;
+
+        this.x += this.vx * dt;
 
         // Screen Boundaries
-        if (this.x < 0) this.x = 0;
-        if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+        if (this.x < 0) {
+            this.x = 0;
+            this.vx = 0;
+        }
+        if (this.x > canvas.width - this.width) {
+            this.x = canvas.width - this.width;
+            this.vx = 0;
+        }
         
         // Lock Y to fixed bottom position
         this.y = canvas.height - this.height - 30;

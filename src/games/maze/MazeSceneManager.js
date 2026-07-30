@@ -41,6 +41,7 @@ export class MazeGameplayScene {
         
         UIEngine.showScreen('mobileControls');
         UIEngine.showScreen('hud');
+        UIEngine.setupMazeControls();
         
         keys.left = false;
         keys.right = false;

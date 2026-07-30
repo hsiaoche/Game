@@ -5,103 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Educational Game Collection</title>
     <meta name="description" content="A minimalist educational game collection optimized for mobile">
-    <link rel="stylesheet" href="style.css?v=2.1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=3.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
         <canvas id="gameCanvas"></canvas>
         
         <div id="ui-layer">
-        <!-- HUD (計時器與生命值) -->
-        <div id="hud" class="hidden">
-            <div class="hud-left">
-                <div id="level-indicator">Lv 1</div>
-                <div id="time-display">00:00</div>
+            
+            <div class="hud-container flex-center" style="align-items: flex-start; pointer-events: none;">
+                <div id="score" class="hidden">00000</div>
             </div>
-            <div class="hud-right">
-                <div id="lives-display"></div>
-            </div>
-        </div>
 
-        <!-- Survival HUD -->
-        <div id="survival-hud" class="hidden">
-            <div id="exp-bar">
-                <div id="exp-fill"></div>
-            </div>
-            <div class="survival-stats">
-                <div id="survival-time">00:00</div>
-                <div id="survival-level">Lv. 1</div>
-                <div id="hp-bar-container">
-                    <div id="hp-fill"></div>
-                    <div id="hp-text">100 / 100</div>
+            <!-- HUD (計時器與生命值) -->
+            <div id="hud" class="hud-container hidden">
+                <div class="hud-panel flex-col gap-1">
+                    <div id="level-indicator" class="hud-level">Lv 1</div>
+                </div>
+                <div class="hud-panel flex-center">
+                    <div id="time-display" class="hud-time">00:00</div>
+                </div>
+                <div class="hud-panel flex-center">
+                    <div id="lives-display" class="hud-lives"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Level Up Screen -->
-        <div id="level-up-screen" class="hidden">
-            <div class="level-up-container glass-panel">
-                <h2>Level Up!</h2>
-                <div id="level-up-options">
-                    <!-- Options injected here -->
+            <!-- Survival HUD -->
+            <div id="survival-hud" class="hud-container flex-col gap-2 hidden" style="width: 100%;">
+                <!-- EXP Bar -->
+                <div class="bar-container bar-container-sm" style="width: 100%;">
+                    <div id="exp-fill" class="bar-fill success"></div>
+                </div>
+                <!-- Stats Row -->
+                <div class="flex-between" style="width: 100%;">
+                    <!-- Left -->
+                    <div class="hud-panel flex-col gap-1" style="min-width: 160px;">
+                        <div class="flex-between" style="width: 100%; gap: 10px;">
+                            <div id="survival-level" class="hud-level">Lv. 1</div>
+                            <div id="hp-text" class="text-caption text-danger" style="font-weight: bold; white-space: nowrap;">100 / 100</div>
+                        </div>
+                        <div class="bar-container bar-container-sm" style="width: 100%;">
+                            <div id="hp-fill" class="bar-fill danger"></div>
+                        </div>
+                    </div>
+                    <!-- Center -->
+                    <div class="hud-panel flex-center">
+                        <div id="survival-time" class="hud-time">00:00</div>
+                    </div>
+                    <!-- Right -->
+                    <div class="flex-col gap-2" style="align-items: flex-end;">
+                        <button id="btn-pause" class="btn btn-outline btn-icon">⏸</button>
+                        <div id="skill-list" class="flex-col gap-1" style="align-items: flex-end;"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 死亡答題畫面 -->
-        <div id="question-screen" class="hidden">
-            <h2 id="question-title">問題</h2>
-            <div id="question-options" class="options-grid"></div>
-        </div>
-
-        <div id="score" class="hidden">00000</div>
-        
-        <!-- Game Hub 選單 -->
-        <div id="hub-screen">
-            <h1>Game Hub</h1>
-            <p>教育小遊戲集合</p>
-            <p class="subtitle">EDUCATIONAL GAME COLLECTION</p>
-            <div class="options-grid" style="margin-top: 2rem;">
-                <!-- Phase 2 Complete, Phase 3 enabled -->
-                <button id="btn-play-maze" class="option-btn">迷宮跑酷 (Maze Platformer)</button>
-                <button id="btn-play-survival" class="option-btn">怪獸生存 (Monster Survival)</button>
-                <button id="btn-play-puzzle" class="option-btn" disabled>邏輯解謎 (Logic Puzzle - 敬請期待)</button>
+            <!-- Boss Warning -->
+            <div id="boss-warning" class="hidden">
+                <h1>⚠ BOSS APPROACHING ⚠</h1>
             </div>
-        </div>
-        
-        <div id="start-screen" class="hidden">
-                <h1>迷宮跑酷</h1>
-                <p>探索封閉迷宮，躲避紅色陷阱，尋找綠色終點！</p>
-                <p class="subtitle">MAZE PLATFORMER</p>
-                <p style="margin-top: 1.5rem; font-size: 0.9rem;">點擊螢幕 或 按空白鍵開始</p>
+
+            <!-- Game Hub 選單 -->
+            <div id="hub-screen" class="panel modal-sm">
+                <h1 class="text-h1 text-gradient">Game Hub</h1>
+                <p class="text-body text-muted">教育小遊戲集合</p>
+                <p class="text-caption" style="margin-top: var(--sp-1);">EDUCATIONAL GAME COLLECTION</p>
+                <div class="flex-col gap-3" style="margin-top: var(--sp-6);">
+                    <button id="btn-play-maze" class="btn btn-primary btn-lg">迷宮跑酷 (Maze Platformer)</button>
+                    <button id="btn-play-survival" class="btn btn-primary btn-lg">怪獸生存 (Monster Survival)</button>
+                    <button id="btn-play-puzzle" class="btn btn-outline btn-lg" disabled>邏輯解謎 (敬請期待)</button>
+                </div>
             </div>
             
-            <div id="game-over-screen" class="hidden">
-                <h2 id="end-title">GAME OVER</h2>
-                <p id="end-msg">你碰到了陷阱...</p>
-                <div id="leaderboard-container" class="hidden">
-                    <h3 class="leaderboard-title">🏆 最佳成績 🏆</h3>
-                    <ul id="leaderboard-list"></ul>
-                </div>
-                <p style="margin-top: 1rem; font-size: 0.9rem;">點擊螢幕重新開始</p>
+            <!-- Start Screen -->
+            <div id="start-screen" class="panel modal-sm hidden">
+                <h1 class="text-h1 text-gradient">迷宮跑酷</h1>
+                <p class="text-body text-muted">探索封閉迷宮，躲避紅色陷阱，尋找綠色終點！</p>
+                <p class="text-caption" style="margin-top: var(--sp-2);">MAZE PLATFORMER</p>
+                <p class="text-caption" style="margin-top: var(--sp-6);">點擊螢幕 或 按空白鍵開始</p>
             </div>
+            
+            <!-- Game Over Screen -->
+            <div id="game-over-screen" class="panel modal-sm hidden">
+                <h2 id="end-title" class="text-h1 text-gradient">GAME OVER</h2>
+                <p id="end-msg" class="text-body text-muted" style="margin-bottom: var(--sp-4);">你碰到了陷阱...</p>
+                
+                <div id="leaderboard-container" class="leaderboard hidden">
+                    <h3 class="text-h3 text-warning">🏆 最佳成績 🏆</h3>
+                    <ul id="leaderboard-list" class="leaderboard-list"></ul>
+                </div>
+                
+                <p class="text-caption" style="margin-top: var(--sp-6);">點擊螢幕重新開始</p>
+            </div>
+
+            <!-- Pause Screen -->
+            <div id="pause-screen" class="screen-overlay flex-center hidden">
+                <div class="panel modal-sm animate-pop-in">
+                    <h2 class="text-h1 text-gradient">PAUSED</h2>
+                    <div class="flex-col gap-3" style="margin-top: var(--sp-6);">
+                        <button id="btn-resume" class="btn btn-primary btn-lg">繼續遊戲 (Resume)</button>
+                        <button id="btn-quit" class="btn btn-outline btn-lg">回主選單 (Quit)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Up Screen -->
+            <div id="level-up-screen" class="screen-overlay flex-center hidden">
+                <div class="panel modal-md animate-pop-in">
+                    <h2 class="text-h1 text-warning" style="text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);">Level Up!</h2>
+                    <div id="level-up-options" class="flex-col gap-3" style="margin-top: var(--sp-6);">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Screen -->
+            <div id="question-screen" class="screen-overlay flex-center hidden">
+                <div class="panel modal-md animate-pop-in">
+                    <h2 id="question-title" class="text-h2" style="white-space: pre-wrap; line-height: 1.5; text-align: left; color: var(--color-text-main);">問題</h2>
+                    <div id="question-options" class="flex-col gap-3" style="margin-top: var(--sp-6);"></div>
+                </div>
+            </div>
+
         </div>
 
         <!-- 虛擬按鍵 (Mobile Controls) -->
         <div id="mobile-controls" class="hidden">
-            <div class="control-group-left">
+            <div class="control-group">
                 <button id="btn-left" class="control-btn">◀</button>
                 <button id="btn-right" class="control-btn">▶</button>
+                <div id="joystick-left" class="joystick-base d-none">
+                    <div id="joystick-left-knob" class="joystick-knob"></div>
+                </div>
             </div>
-            <div class="control-group-right">
-                <button id="btn-jump" class="control-btn jump-btn">▲</button>
-                <div id="joystick-right" class="joystick-base hidden">
+            <div class="control-group">
+                <button id="btn-jump" class="control-btn" style="width: 72px; height: 72px; font-size: 2rem;">▲</button>
+                <div id="joystick-right" class="joystick-base d-none">
                     <div id="joystick-knob" class="joystick-knob"></div>
                 </div>
             </div>
         </div>
+
     </div>
-    <script type="module" src="./src/main.js?v=2.1"></script>
+    <script type="module" src="./src/main.js?v=3.0"></script>
 </body>
 </html>

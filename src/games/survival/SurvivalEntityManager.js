@@ -4,6 +4,7 @@ import { ExpGem } from './entities/ExpGem.js';
 import { Projectile } from './entities/Projectile.js';
 import { DamageText } from './entities/DamageText.js';
 import { SurvivalPlayer } from './entities/SurvivalPlayer.js';
+import { SurvivalConfig } from './config.js';
 
 export const SurvivalEntityManager = {
     player: null,
@@ -11,6 +12,7 @@ export const SurvivalEntityManager = {
     gemPool: null,
     projectilePool: null,
     damageTextPool: null,
+    bossDefeated: false,
 
     init() {
         this.player = new SurvivalPlayer();
@@ -26,6 +28,8 @@ export const SurvivalEntityManager = {
 
         if (!this.damageTextPool) this.damageTextPool = new ObjectPool(() => new DamageText(), 100);
         else this.damageTextPool.clear();
+        
+        this.bossDefeated = false;
     },
 
     spawnEnemy(x, y, config) {
@@ -76,7 +80,7 @@ export const SurvivalEntityManager = {
         // Update Gems
         if (this.gemPool) {
             this.gemPool.getActiveObjects().forEach(g => {
-                g.update(dt, this.player);
+                g.update(dt, this.player, canvas);
             });
         }
 
@@ -94,9 +98,15 @@ export const SurvivalEntityManager = {
 
         // 1. Player vs Gems (Pickup)
         const activeGems = this.gemPool ? this.gemPool.getActiveObjects() : [];
+        const pCenterX = pBox.x + pBox.width / 2;
+        const pCenterY = pBox.y + pBox.height / 2;
+        
         for (let g of activeGems) {
-            // Easier pickup hitbox (negative shrink expands the AABB)
-            if (this.checkAABB(pBox, { x: g.x - g.size/2, y: g.y - g.size/2, width: g.size, height: g.size }, -15)) {
+            let dx = pCenterX - g.x;
+            let dy = pCenterY - g.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist <= SurvivalConfig.EXP_PICKUP_RADIUS) {
                 if (this.player.gainExp(g.value)) leveledUp = true;
                 g.active = false;
             }
@@ -136,6 +146,9 @@ export const SurvivalEntityManager = {
 
                     if (e.takeDamage(p.damage, kbX, kbY)) {
                         this.spawnGem(e.x + e.width/2, e.y + e.height/2, e.expValue);
+                        if (e.isBoss) {
+                            this.bossDefeated = true;
+                        }
                     }
                     
                     if (p.hitEnemies.size >= p.penetration) {

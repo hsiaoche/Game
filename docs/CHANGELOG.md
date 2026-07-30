@@ -1,101 +1,41 @@
-# 更新紀錄 (Changelog)
+# 更新日誌 (Changelog)
 
-所有本專案的變更紀錄將遵守 [Semantic Versioning](https://semver.org/)。
+所有關於本專案的顯著變更將記錄於此文件中。
 
-## [v2.0.0-alpha] - 2026-07-28
-### Added
-- **Educational Game Collection Architecture**: 遊戲轉型為教育小遊戲平台。
-- **Game Hub**: 新增 `HubSceneManager` 與主選單介面，允許在不同遊戲間切換。
-- **AchievementManager**: 新增跨遊戲共用的成就系統。
-- **SaveManager 擴充**: 新增 `gameId` 命名空間支援，使不同遊戲（如 maze, survival）可獨立存檔。
+本文件的格式基於 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/) 規範，且本專案採用 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) 進行版本控制。
 
-### Changed
-- **Directory Restructure**:
-  - 核心模組移至 `src/shared/` 與 `src/engine/`。
-  - Maze 專屬模組移至 `src/games/maze/`，達成完全封裝。
-- **Module Renaming & Decoupling**:
-  - `PhysicsEngine.js` 拆分為 Maze 專用的 `MazePhysics.js`。
-  - `EntityManager.js` 拆分為 Maze 專用的 `MazeEntityManager.js`。
-  - `LevelManager.js` 拆分為 Maze 專用的 `MazeLevelManager.js`。
-  - `SceneManager` 被解耦，Maze 專屬場景移至 `MazeSceneManager.js`。
+## [Unreleased]
 
-## [v1.9.1] - 2026-07-28
-### Fixed
-- 修正關卡生成腳本 (fix_levels.cjs)：重新調整 10 個關卡的地形，嚴格限制最大向上跳躍高度為 3 格，並確保向上跳躍的平台間必有水平重疊，保證物理上 100% 可通關。
-- 修正題庫渲染 Bug (`style.css`)：修復因 `-webkit-background-clip: text` 在多行文字下導致漸層失效、後續行數變透明的問題。現在多行題目可正常完整顯示。
-- 修復了切換關卡與復活答題時，HUD 上方層數會錯誤重設回第一層的問題。
+### 預定重構與優化 (Planned)
+- 重構 `SurvivalSceneManager.js` 與 `MazeSceneManager.js`，將 Canvas 繪製邏輯抽離至獨立的 Renderer。
+- 優化 `UIEngine.updateHUD`，導入 Dirty Flag 機制以減少不必要的 DOM 操作 (解決 DOM Thrashing 問題)。
+- 優化關卡設計，為 Maze Platformer 的高難度關卡 (Level 6-10) 加入安全平台與 Checkpoint。
 
-## [v1.9.0] - 2026-07-23
-### Refactored
-- Architecture Refactor Phase 5 (UI 系統與資料庫層重構)。
-- 建立 `UIEngine.js`，將所有 `document.getElementById` 和 `innerHTML` 等 DOM 變更操作集中管理。
-- 拆分原先的 `QuestionManager.js`，將負責網路抓取的邏輯獨立至 `QuestionRepository.js`。
-- 建立 `SaveManager.js` 取代 `LeaderboardManager` 來統一管理遊戲的持久化。
-- 建立 `AudioManager.js` 提供基礎音效播放介面。
+## [2.0.0-beta] - 2026-07-29
 
-## [v1.8.0] - 2026-07-23
-### Refactored
-- Architecture Refactor Phase 4 (渲染與地圖系統重構)。
-- 建立 `Renderer.js`, `TileRenderer.js`, `EntityRenderer.js` 將繪圖邏輯從模型物件完全剝離。
-- 引入 Offscreen Canvas 快取技術 (`TileRenderer`) 將地圖渲染效能從 O(N²) 降為 O(1)。
-- 關卡資料 `levels.js` 重構為 JSON 物件格式。
+### Added (新增)
+- **多遊戲架構**: 建立 Game Hub，實作 `SceneManager` 支援多款遊戲無縫切換。
+- **怪獸生存 (Monster Survival)**: 全新遊戲模式。
+  - 實作 1D 橫向移動與 2D 搖桿/滑鼠瞄準雙搖桿機制。
+  - 導入 Wave Difficulty 生成器，包含 Wave 5 Boss 戰鬥。
+  - 實作經驗值重力掉落與動態磁吸機制。
+  - 新增資料驅動的升級技能庫 (`SkillsDB.js`)，提供隨機 3 選 1 升級體驗。
+- **共用題庫系統**: 死亡或特定事件觸發，統一由 `QuestionRepository` 讀取 `questions.md` 產生題目。
+- **UI HUD**: 新增暫停選單 (Pause Menu)、Boss 警告與結算畫面 (Victory/GameOver)。
 
-## [v1.7.0] - 2026-07-23
-### Refactored
-- Architecture Refactor Phase 3 (實體與物理層重構)。
-- 建立 `ObjectPool.js` 管理頻繁生成的粒子與鋸片，消除記憶體 GC 壓力。
-- 獨立 `Player.js`, `Saw.js`, `Particle.js`，並為 `PhysicsEngine.js` 實作 Broad Phase。
+### Changed (變更)
+- 移除舊版 `Core.js` 的耦合，將時間控制、攝影機、輸入狀態抽象為 `GameLoop.js`, `Camera.js`, `InputManager.js`。
+- 重構實體 (Entities) 渲染，導入 `ObjectPool` 以降低垃圾回收 (GC) 效能負擔。
+- 物理引擎導入 Broad Phase (空間過濾) 與 Narrow Phase (AABB 碰撞)，提升碰撞偵測效能。
 
-## [v1.6.0] - 2026-07-23
-### Refactored
-- Architecture Refactor Phase 2 (核心引擎拆分)。
-- 將 `Core.js` God Object 拆解為 `GameLoop.js`, `Time.js`, `GameState.js`, `Camera.js`, `InputManager.js`。
-- 模組化 `GameContext` 與 `CameraState`，全面更新 `main.js` 等相依模組的 Import 邏輯。
+### Fixed (修復)
+- 修復 Maze Platformer 中，玩家出生在空中與物件重疊的問題。
+- 修復手機版雙搖桿操控時，快速多點觸控可能導致搖桿卡死的邊界情況。
 
-## [v1.5.0] - 2026-07-23
-### Refactored
-- Architecture Refactor Phase 1 (基礎建設與解耦)。
-- 建立 `EventBus.js`，實作 Publish/Subscribe 模式取代回呼函數 (Callbacks)。
-- 抽離遊戲常數至 `config/gameConfig.js` 與 `config/physicsConfig.js`，消除 Magic Numbers。
-- 建立 `StorageAdapter` 介面，隔離 `LocalStorage` 存取，提高擴充性。
-- 新增完整的 `ROADMAP.md`, `TECH_DEBT.md`, `AI_HANDOVER.md` 說明文件。
-- 大幅重寫 `README.md`。
+## [1.0.0] - 2023-10-25
 
-## [v1.4.0] - 2026-07-23
-### Added
-- Phase 4 & 5: 競速答題復活與歷史排行榜系統。
-- `QuestionManager` 實作答題視窗，支援自定義 Markdown (`questions.md`) 題庫。
-- 死亡答題時背景不暫停，強制施加時間壓力。
-- 實作答對復活後的「3秒無敵狀態 (Invincibility Frames)」。
-- 實作 `LeaderboardManager`，使用 `localStorage` 保存並排序歷史 Top 5 最快通關成績。
-- UI 重構：改用 CSS Grid 重疊顯示畫面，修復隱藏元素造成的排版擠壓 Bug。
-- 新增左上角遊戲時間與剩餘生命值 (三顆方塊) 顯示。
-
-## [v1.3.0] - 2026-07-23
-### Added
-- Phase 3: 關卡系統外部化。
-- 新增 `LevelManager` 處理關卡切換與生成。
-- 將地圖資料從程式碼抽離至獨立的 `levels.js` 設定檔。
-- 開發者模式再進化，支援按 `H` 切換 1倍/2倍/4倍速 進行極速測試。
-
-## [v1.2.0] - 2026-07-22
-### Fixed
-- Phase 2: 物理引擎修復與架構優化。
-- 修復 Sub-stepping (穿隧效應) 造成的碰撞 Bug。
-- 優化粒子系統效能，實作物件池 (Object Pool) 避免 GC 停頓。
-### Added
-- 開發者模式：按 `G` 開啟無敵模式 (God Mode)。
-
-## [v1.1.0] - 2026-07-22
-### Changed
-- Phase 1: 遊戲引擎模組化。
-- 將龐大的單一檔案拆分為 `Core.js`, `Map.js`, `Entities.js`, `EntityManager.js`, `SceneManager.js`, `PhysicsEngine.js`。
-- 導入完整的 Scene 狀態機 (MainMenuScene, GameplayScene, GameOverScene)。
-
-## [v1.0.0] - 2026-07-22
-### Added
-- 迷宮跑酷原型完成。
-- HTML5 Canvas 渲染。
-- 單一固定 Z 字型迷宮。
-- 巡邏鋸片 (水平與垂直)。
-- 手機虛擬按鍵支援。
+### Added (新增)
+- 初始版本：迷宮跑酷 (Maze Platformer)。
+- 建立基礎網格地圖解析器 (`levels.js`) 與 10 個基礎關卡。
+- 實作基礎 2D 平台物理引擎（跳躍、重力、摩擦力）。
+- 實作基礎 AABB 碰撞偵測機制。

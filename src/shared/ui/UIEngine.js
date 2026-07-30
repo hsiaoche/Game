@@ -6,6 +6,7 @@
 import { QuestionRepository } from '../data/QuestionRepository.js';
 
 export const UIEngine = {
+    _lastState: {},
     screens: {
         hub: document.getElementById('hub-screen'),
         start: document.getElementById('start-screen'),
@@ -14,7 +15,9 @@ export const UIEngine = {
         mobileControls: document.getElementById('mobile-controls'),
         hud: document.getElementById('hud'),
         survivalHud: document.getElementById('survival-hud'),
-        levelUp: document.getElementById('level-up-screen')
+        levelUp: document.getElementById('level-up-screen'),
+        pauseScreen: document.getElementById('pause-screen'),
+        bossWarning: document.getElementById('boss-warning')
     },
     
     elements: {
@@ -34,10 +37,56 @@ export const UIEngine = {
         expFill: document.getElementById('exp-fill'),
         hpFill: document.getElementById('hp-fill'),
         hpText: document.getElementById('hp-text'),
-        levelUpOptions: document.getElementById('level-up-options')
+        levelUpOptions: document.getElementById('level-up-options'),
+        skillList: document.getElementById('skill-list'),
+        
+        // Controls
+        jumpBtn: document.getElementById('btn-jump'),
+        joystickRight: document.getElementById('joystick-right'),
+        joystickLeft: document.getElementById('joystick-left'),
+        btnLeft: document.getElementById('btn-left'),
+        btnRight: document.getElementById('btn-right'),
+        pauseBtn: document.getElementById('btn-pause')
+    },
+
+    setupSurvivalControls() {
+        if (this.elements.jumpBtn) this.elements.jumpBtn.classList.add('d-none');
+        if (this.elements.joystickRight) this.elements.joystickRight.classList.remove('d-none');
+        if (this.elements.joystickLeft) this.elements.joystickLeft.classList.remove('d-none');
+        if (this.elements.btnLeft) this.elements.btnLeft.classList.add('d-none');
+        if (this.elements.btnRight) this.elements.btnRight.classList.add('d-none');
+    },
+
+    teardownSurvivalControls() {
+        if (this.elements.jumpBtn) this.elements.jumpBtn.classList.remove('d-none');
+        if (this.elements.joystickRight) this.elements.joystickRight.classList.add('d-none');
+        if (this.elements.joystickLeft) this.elements.joystickLeft.classList.add('d-none');
+        if (this.elements.btnLeft) this.elements.btnLeft.classList.remove('d-none');
+        if (this.elements.btnRight) this.elements.btnRight.classList.remove('d-none');
+        if (this.elements.pauseBtn) this.elements.pauseBtn.onclick = null;
+    },
+
+    setupMazeControls() {
+        if (this.elements.jumpBtn) this.elements.jumpBtn.classList.remove('d-none');
+        if (this.elements.joystickRight) this.elements.joystickRight.classList.add('d-none');
+        if (this.elements.joystickLeft) this.elements.joystickLeft.classList.add('d-none');
+        if (this.elements.btnLeft) this.elements.btnLeft.classList.remove('d-none');
+        if (this.elements.btnRight) this.elements.btnRight.classList.remove('d-none');
+    },
+
+    bindPauseButton(onPause) {
+        if (this.elements.pauseBtn) {
+            this.elements.pauseBtn.onclick = onPause;
+        }
     },
 
     updateHUD(time, lives, maxLives = 3, levelIndex = 0) {
+        const timeStr = time.toFixed(2); // Use toFixed(2) to allow millisecond updates
+        const stateKey = `hud_${timeStr}_${lives}_${maxLives}_${levelIndex}`;
+        
+        if (this._lastState.hud === stateKey) return;
+        this._lastState.hud = stateKey;
+
         if (this.elements.levelIndicator) {
             this.elements.levelIndicator.innerText = `Level ${levelIndex + 1}`;
         }
@@ -54,7 +103,15 @@ export const UIEngine = {
         }
     },
 
-    updateSurvivalHUD(timeStr, level, exp, maxExp, hp, maxHp) {
+    updateSurvivalHUD(timeStr, level, exp, maxExp, hp, maxHp, skills) {
+        // Create a fast hash/string representation of current state
+        let skillsHash = skills ? skills.map(s => `${s.name}${s.level}`).join('') : '';
+        let hpInt = Math.ceil(hp);
+        const stateKey = `survhud_${timeStr}_${level}_${exp}_${maxExp}_${hpInt}_${maxHp}_${skillsHash}`;
+        
+        if (this._lastState.survivalHud === stateKey) return;
+        this._lastState.survivalHud = stateKey;
+
         if (this.elements.survivalTime) this.elements.survivalTime.innerText = timeStr;
         if (this.elements.survivalLevel) this.elements.survivalLevel.innerText = `Lv. ${level}`;
         
@@ -66,7 +123,17 @@ export const UIEngine = {
         if (this.elements.hpFill) {
             let pct = Math.max(0, (hp / maxHp) * 100);
             this.elements.hpFill.style.width = `${pct}%`;
-            if (this.elements.hpText) this.elements.hpText.innerText = `${Math.ceil(hp)} / ${maxHp}`;
+            if (this.elements.hpText) this.elements.hpText.innerText = `${hpInt} / ${maxHp}`;
+        }
+
+        if (this.elements.skillList && skills) {
+            this.elements.skillList.innerHTML = '';
+            skills.forEach(s => {
+                const badge = document.createElement('div');
+                badge.className = 'skill-badge';
+                badge.innerText = `${s.name} Lv.${s.level}`;
+                this.elements.skillList.appendChild(badge);
+            });
         }
     },
 
@@ -141,6 +208,25 @@ export const UIEngine = {
                 this.elements.levelUpOptions.appendChild(btn);
             });
         });
+    },
+
+    showPauseScreen(onResume, onQuit) {
+        this.screens.pauseScreen.classList.remove('hidden');
+        document.getElementById('btn-resume').onclick = () => {
+            this.screens.pauseScreen.classList.add('hidden');
+            if (onResume) onResume();
+        };
+        document.getElementById('btn-quit').onclick = () => {
+            this.screens.pauseScreen.classList.add('hidden');
+            if (onQuit) onQuit();
+        };
+    },
+
+    showBossWarning() {
+        this.screens.bossWarning.classList.remove('hidden');
+        setTimeout(() => {
+            this.screens.bossWarning.classList.add('hidden');
+        }, 3000); // Hide after 3 seconds
     },
 
     showGameOver(isWin, deathInfo = null, finalTimeStr = null, topRecords = []) {

@@ -1,47 +1,36 @@
-# 專案狀態 (Project Status)
+# 專案狀態報告 (Project Status)
 
-## 目前版本
-v2.0.0-alpha (Educational Game Collection Architecture)
+## 目前階段 (Current Phase)
 
-## 目前完成度
-正在開發中 (Phase 1 & Phase 2 重構已完成，即將進入 Phase 3：Monster Survival)
+**Phase: Beta / Refactoring (重構與優化期)**
 
-## 目前可運作功能
-- **Educational Game Collection 架構**: 具備擴展性的多遊戲平台架構。
-- **Game Hub**: 可切換不同遊戲的主選單 (`HubSceneManager`)。
-- **成就與存檔隔離**: 全域的成就系統 (`AchievementManager`) 與依照 `gameId` 隔離的存檔、排行榜機制。
-- **Maze Platformer 完整封裝**: 原先的迷宮跑酷遊戲邏輯已完全抽離並封裝於 `src/games/maze/` 之下。
-- 物理引擎重構 (Broad Phase 空間過濾 / Narrow Phase)
-- 獨立的 Renderer 抽象層 (分離繪圖與邏輯，支援 Offscreen Canvas 地圖快取)
-- 完整的 MVC 架構分離
-- 玩家物理引擎與碰撞偵測 (AABB + Tunneling 修正)
-- 移動式裝置虛擬搖桿支援
-- 獨立的 UI 引擎 (`UIEngine`) 與資料庫抽象層 (`QuestionRepository`, `SaveManager`)
-- 開發者除錯模式 (God Mode, Speed Multiplier)
-- 外部關卡資料 (`levels.js`)
-- 題庫系統 (`questions.md` Markdown 解析)
-- 死亡後答對復活機制 (無敵時間、生命值、背景時間不暫停)
-- 破關排行榜系統 (Local Storage Top 5 競速紀錄)
-- 答題復活機制
-- Checkpoint 儲存點
-- 學生設定與進度存檔 (LocalStorage)
-- 排行榜與老師管理介面
-- 音效與動畫優化
+本專案已完成從單一遊戲過渡為「多遊戲合集 (Educational Game Collection)」的底層建設。目前迷宮跑酷與怪獸生存的核心玩法皆已實裝，當前重點為修復架構技術債、優化效能，以及關卡體驗的打磨。
 
-## 目前未完成功能 (Future Goals)
-- 教學模式
+## 已完成的重大里程碑
 
-## 目前 Bug
-- 已知 Bug (包含無法顯示多行題目、關卡設計不合理導致無法通關、層數重設等) 均已於 v1.9.1 修正完畢。目前無已知嚴重 Bug。
+- **底層引擎拆分**：成功實作 Game Loop、EventBus、Object Pool 與 Scene Manager，所有遊戲共享同一套底層機制。
+- **UI 與渲染分離**：HUD 與選單完全由 `UIEngine` 操作 DOM，遊戲畫面則由 Canvas 負責，兩者解耦。
+- **迷宮跑酷 (Maze Platformer)**：
+  - 完成 10 個基礎關卡設計。
+  - 完善 2D 物理碰撞與邊緣判定 (Coyote Time, Jump Buffer)。
+- **怪獸生存 (Monster Survival)**：
+  - 實裝 1D 橫向移動與 2D 搖桿/滑鼠瞄準機制的結合。
+  - 完成基於重力與距離判定磁吸的經驗值 (EXP) 掉落系統。
+  - 完成資料驅動的升級技能庫 (`SkillsDB.js`)。
+  - 實裝 Wave 難度生成系統，並包含 Wave 5 的 Boss 挑戰與專屬 UI 演出。
 
-## 待完成 (TODO)
-- **Phase 3**: 開發第二款遊戲 Monster Survival。
-  - 實作 WaveManager、EnemyManager、SkillManager 等機制。
-  - 設計生存遊戲 UI、波次與技能系統。
+## 已知問題與技術債 (Known Issues & Tech Debt)
 
-## 技術債 (Technical Debt)
-- 已記錄於 `docs/TECH_DEBT.md`。重構的五大階段已將大部份的耦合與效能問題清理完畢，目前 codebase 極度乾淨。
+目前存在數個影響擴充性與效能的架構問題，需在正式釋出前解決：
+1. **SceneManager 過載**：`SurvivalSceneManager` 包攬了過多職責，包含 DOM 綁定與 Canvas 繪製，違反單一職責原則。
+2. **全域狀態汙染**：使用靜態物件 (Static Singletons) 作為管理器，導致遊戲重啟時極易發生狀態未清空的 Bug。
+3. **DOM 效能浪費**：HUD 每一幀都會被強制更新，造成不必要的 Layout 重繪。
+4. **關卡設計瑕疵**：迷宮跑酷後期的垂直關卡缺乏引導，存在「盲跳」問題；部分長路線缺乏 Checkpoint。
 
-## 下一步計畫
-- **功能擴充**: 考慮支援手把、編輯器等進階功能。
-- [ ] 實作基於 `performance.now()` 的 GameLoop 迴圈。
+## 下一步計畫 (Next Steps)
+
+1. **技術文件同步**：全面翻新 docs 目錄，確保文件與程式碼現況一致（進行中）。
+2. **架構解耦**：將 UI DOM 控制權與繪圖邏輯從 SceneManager 中抽離。
+3. **關卡優化**：為迷宮跑酷後期關卡加入 Checkpoint 與安全落腳點。
+4. **效能優化**：實作 UI 更新的 Dirty Flag 機制。
+5. **發佈準備**：最終的音效打磨與 GitHub Pages 部署準備。
