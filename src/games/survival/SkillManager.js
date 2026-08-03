@@ -63,5 +63,10 @@ export const SkillManager = {
         }
         
         return options;
+    },
+    
+    hasSynergy(skillA, skillB) {
+        return this.playerSkills[skillA] && this.playerSkills[skillA].level >= 3 &&
+               this.playerSkills[skillB] && this.playerSkills[skillB].level >= 3;
     }
 };

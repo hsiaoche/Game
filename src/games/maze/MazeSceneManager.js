@@ -11,7 +11,7 @@ import { Renderer } from '../../engine/renderer/Renderer.js';
 import { SceneManager } from '../../engine/SceneManager.js';
 import { devOptions } from '../../shared/utils/DevOptions.js';
 import { MazeLevelManager } from './MazeLevelManager.js';
-import { level1 } from './levels.js';
+
 import { UIEngine } from '../../shared/ui/UIEngine.js';
 import { SaveManager } from '../../shared/storage/SaveManager.js';
 import { AudioManager } from '../../shared/audio/AudioManager.js';

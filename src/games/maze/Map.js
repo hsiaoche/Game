@@ -7,7 +7,7 @@ export let mapWidth = 0;
 export function getTile(c, r) {
     if (r < 0 || r >= mapHeight || c < 0 || c >= mapWidth) return '1';
     let val = currentMapData[r][c];
-    if (['S', 'H', 'V', 'F', 'C'].includes(val)) val = '0'; // treat as air for physics
+    if (['S', 'H', 'V', 'F', 'C', 'B', 'D', 'P', 'Q', 'R', 'T'].includes(val)) val = '0'; // treat as air for physics
     return val;
 }
 
@@ -24,6 +24,9 @@ export function loadMap(mapData) {
     let startPos = { x: 40, y: 40 };
     const sawConfigs = [];
     const checkpointConfigs = [];
+    const bounceConfigs = [];
+    const dropConfigs = [];
+    const portalConfigs = [];
     
     for (let r = 0; r < mapHeight; r++) {
         for (let c = 0; c < mapWidth; c++) {
@@ -46,10 +49,35 @@ export function loadMap(mapData) {
                     size: 24,
                     rotation: 0
                 });
+            } else if (val === 'B') {
+                bounceConfigs.push({
+                    x: c * TILE_SIZE,
+                    y: r * TILE_SIZE,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE
+                });
+            } else if (val === 'D') {
+                dropConfigs.push({
+                    x: c * TILE_SIZE,
+                    y: r * TILE_SIZE,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                    state: 'idle', // idle, shaking, dropped
+                    timer: 0
+                });
+            } else if (val === 'P' || val === 'Q' || val === 'R' || val === 'T') {
+                portalConfigs.push({
+                    id: val,
+                    x: c * TILE_SIZE,
+                    y: r * TILE_SIZE,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                    cooldown: 0
+                });
             }
         }
     }
-    return { startPos, sawConfigs, checkpointConfigs };
+    return { startPos, sawConfigs, checkpointConfigs, bounceConfigs, dropConfigs, portalConfigs };
 }
 
 

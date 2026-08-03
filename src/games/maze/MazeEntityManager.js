@@ -27,14 +27,18 @@ export const MazeEntityManager = {
         }
     },
 
-    loadSaws(sawConfigs) {
+    loadMapEntities(mapInfo) {
         this.sawPool.clear();
-        for (let config of sawConfigs) {
+        for (let config of mapInfo.sawConfigs) {
             const saw = this.sawPool.get();
             if (saw) {
                 saw.reset(config);
             }
         }
+        
+        this.bouncePads = mapInfo.bounceConfigs || [];
+        this.dropPlatforms = mapInfo.dropConfigs || [];
+        this.portals = mapInfo.portalConfigs || [];
     },
 
     spawnParticle(x, y, color, isExplosion) {
@@ -54,6 +58,31 @@ export const MazeEntityManager = {
     update(dt) {
         if (this.sawPool) {
             this.sawPool.getActiveObjects().forEach(saw => saw.update(dt));
+        }
+        
+        // Update Drop Platforms
+        if (this.dropPlatforms) {
+            this.dropPlatforms.forEach(drop => {
+                if (drop.state === 'shaking') {
+                    drop.timer -= dt;
+                    if (drop.timer <= 0) {
+                        drop.state = 'dropped';
+                        drop.timer = 2.0; // 2 seconds to respawn
+                    }
+                } else if (drop.state === 'dropped') {
+                    drop.timer -= dt;
+                    if (drop.timer <= 0) {
+                        drop.state = 'idle'; // Respawn
+                    }
+                }
+            });
+        }
+
+        // Update Portals cooldown
+        if (this.portals) {
+            this.portals.forEach(p => {
+                if (p.cooldown > 0) p.cooldown -= dt;
+            });
         }
         
         let timeScale = dt * 60;

@@ -33,13 +33,12 @@ export class ExpGem {
         let distSq = dx * dx + dy * dy;
         let dist = Math.sqrt(distSq);
 
-        if (dist <= SurvivalConfig.EXP_MAGNET_RANGE) {
-            this.isBeingSucked = true;
-        }
+        // Auto-pickup: Always suck towards player quickly
+        this.isBeingSucked = true;
 
         if (this.isBeingSucked && dist > 0) {
             // Magnet pull
-            let speed = 400 + (1000 / Math.max(dist, 10));
+            let speed = 800 + (1000 / Math.max(dist, 10)); // Increased speed for auto-pickup
             this.x += (dx / dist) * speed * dt;
             this.y += (dy / dist) * speed * dt;
         } else {

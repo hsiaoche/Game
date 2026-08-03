@@ -120,6 +120,32 @@ export class Player {
                 EventBus.emit(Events.LEVEL_COMPLETE);
             }
         }
+        
+        // Portals (P <-> Q, R <-> T)
+        if (MazeEntityManager.portals) {
+            for (let portal of MazeEntityManager.portals) {
+                if (portal.cooldown > 0) continue;
+                if (MazePhysics.checkAABB(this, portal)) {
+                    let partnerId = null;
+                    if (portal.id === 'P') partnerId = 'Q';
+                    else if (portal.id === 'Q') partnerId = 'P';
+                    else if (portal.id === 'R') partnerId = 'T';
+                    else if (portal.id === 'T') partnerId = 'R';
+                    
+                    if (partnerId) {
+                        const partner = MazeEntityManager.portals.find(p => p.id === partnerId);
+                        if (partner) {
+                            this.x = partner.x;
+                            this.y = partner.y;
+                            portal.cooldown = 1.0;
+                            partner.cooldown = 1.0;
+                            this.vx = 0;
+                            this.vy = -this.jumpForce * 0.5; // slight pop out
+                        }
+                    }
+                }
+            }
+        }
     }
     
     createJumpParticles() {

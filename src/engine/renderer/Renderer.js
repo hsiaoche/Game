@@ -20,7 +20,17 @@ export const Renderer = {
         // 1. Draw Map (Background + Tiles)
         TileRenderer.draw(ctx, cameraX, cameraY, canvasWidth, canvasHeight);
 
-        // 2. Draw Entities (Saws, Particles, Player)
+        // 2. Draw Map Entities (Bounce, Drop, Portals)
+        EntityRenderer.drawMapEntities(
+            ctx, 
+            MazeEntityManager.bouncePads, 
+            MazeEntityManager.dropPlatforms, 
+            MazeEntityManager.portals, 
+            cameraX, 
+            cameraY
+        );
+
+        // 3. Draw Entities (Saws, Particles, Player)
         const saws = MazeEntityManager.saws;
         if (saws.length > 0) {
             EntityRenderer.drawSaws(ctx, saws, cameraX, cameraY);

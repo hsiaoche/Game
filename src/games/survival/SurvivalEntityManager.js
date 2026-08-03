@@ -59,6 +59,57 @@ export const SurvivalEntityManager = {
         const t = this.damageTextPool.get();
         if (t) t.reset(x, y, text, color);
     },
+    
+    spawnEnemyProjectile(x, y, vx, vy, speed, damage, color) {
+        if (!this.projectilePool) return;
+        const p = this.projectilePool.get();
+        if (p) {
+            p.reset(x, y, vx, vy, {
+                damage: damage,
+                speed: speed,
+                color: color,
+                size: 8,
+                range: 1000,
+                penetration: 1
+            });
+            p.isEnemyProjectile = true; // distinguish from player projectiles
+        }
+    },
+    
+    spawnExplosion(x, y, radius, damage, color, dealDamage = true) {
+        if (dealDamage && this.player) {
+            let dx = this.player.x - x;
+            let dy = this.player.y - y;
+            if (dx*dx + dy*dy < radius*radius) {
+                if (this.player.takeDamage(damage)) {
+                    this.spawnDamageText(this.player.x, this.player.y - 10, `-${Math.round(damage)}`, '#f43f5e');
+                }
+            }
+        }
+    },
+    
+    healEnemiesInRange(x, y, radius, amount) {
+        if (!this.enemyPool) return;
+        this.enemyPool.getActiveObjects().forEach(e => {
+            let dx = e.x - x;
+            let dy = e.y - y;
+            if (dx*dx + dy*dy < radius*radius) {
+                e.hp = Math.min(e.hp + amount, e.maxHp);
+                this.spawnDamageText(e.x, e.y - 10, `+${Math.round(amount)}`, '#22c55e');
+            }
+        });
+    },
+    
+    shieldEnemiesInRange(x, y, radius) {
+        if (!this.enemyPool) return;
+        this.enemyPool.getActiveObjects().forEach(e => {
+            let dx = e.x - x;
+            let dy = e.y - y;
+            if (dx*dx + dy*dy < radius*radius) {
+                e.hasShield = true;
+            }
+        });
+    },
 
     update(dt, keys, canvas) {
         if (!this.player) return;
@@ -73,7 +124,7 @@ export const SurvivalEntityManager = {
         // Update Enemies
         if (this.enemyPool) {
             this.enemyPool.getActiveObjects().forEach(e => {
-                e.update(dt, this.player);
+                e.update(dt, this.player, canvas);
             });
         }
 
@@ -117,43 +168,85 @@ export const SurvivalEntityManager = {
         for (let e of activeEnemies) {
             if (this.checkAABB(pBox, e.getHitbox(), 4)) {
                 if (this.player.takeDamage(e.damage)) {
-                    this.spawnDamageText(this.player.x, this.player.y - 10, `-${e.damage}`, '#f43f5e');
+                    this.spawnDamageText(this.player.x, this.player.y - 10, `-${Math.round(e.damage)}`, '#f43f5e');
                 }
             }
         }
 
-        // 3. Projectiles vs Enemies
+        // 3. Projectiles vs Enemies & Player
         const activeProjectiles = this.projectilePool ? this.projectilePool.getActiveObjects() : [];
         for (let p of activeProjectiles) {
             const projBox = p.getHitbox();
-            for (let e of activeEnemies) {
-                if (p.hitEnemies.has(e)) continue; // Already hit
-
-                if (this.checkAABB(projBox, e.getHitbox())) {
-                    p.hitEnemies.add(e);
-                    
-                    // Knockback vector
-                    let dx = e.x + e.width/2 - (p.x);
-                    let dy = e.y + e.height/2 - (p.y);
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    let kbX = 0, kbY = 0;
-                    if (dist > 0) {
-                        kbX = (dx/dist) * 300;
-                        kbY = (dy/dist) * 300;
+            
+            if (p.isEnemyProjectile) {
+                // Enemy Projectile hits Player
+                if (this.checkAABB(projBox, pBox)) {
+                    if (this.player.takeDamage(p.damage)) {
+                        this.spawnDamageText(this.player.x, this.player.y - 10, `-${Math.round(p.damage)}`, '#f43f5e');
                     }
-                    
-                    this.spawnDamageText(e.x, e.y - 10, p.damage, '#fff');
-
-                    if (e.takeDamage(p.damage, kbX, kbY)) {
-                        this.spawnGem(e.x + e.width/2, e.y + e.height/2, e.expValue);
-                        if (e.isBoss) {
-                            this.bossDefeated = true;
+                    p.active = false;
+                }
+            } else {
+                // Player Projectile hits Enemies
+                for (let e of activeEnemies) {
+                    if (p.hitEnemies.has(e)) continue; // Already hit
+    
+                    if (this.checkAABB(projBox, e.getHitbox())) {
+                        p.hitEnemies.add(e);
+                        
+                        if (p.onHit) {
+                            p.onHit(p, e);
                         }
-                    }
-                    
-                    if (p.hitEnemies.size >= p.penetration) {
-                        p.active = false;
-                        break;
+                        
+                        // Knockback vector
+                        let dx = e.x + e.width/2 - (p.x);
+                        let dy = e.y + e.height/2 - (p.y);
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        let kbX = 0, kbY = 0;
+                        if (dist > 0 && !p.noKnockback) {
+                            kbX = (dx/dist) * 300;
+                            kbY = (dy/dist) * 300;
+                        }
+                        
+                        this.spawnDamageText(e.x, e.y - 10, Math.round(p.damage), '#fff');
+    
+                        if (e.takeDamage(p.damage, kbX, kbY)) {
+                            this.spawnGem(e.x + e.width/2, e.y + e.height/2, e.expValue);
+                            if (e.isBoss) {
+                                this.bossDefeated = true;
+                            }
+                        }
+                        
+                        if (p.chainLightning) {
+                            // Find nearest enemy to chain to
+                            let nearest = null;
+                            let minDist = 400;
+                            for (let other of activeEnemies) {
+                                if (other === e || !other.active || p.hitEnemies.has(other)) continue;
+                                let ddx = other.x - e.x;
+                                let ddy = other.y - e.y;
+                                let d = Math.sqrt(ddx*ddx + ddy*ddy);
+                                if (d < minDist) {
+                                    minDist = d;
+                                    nearest = other;
+                                }
+                            }
+                            if (nearest) {
+                                let ddx = nearest.x - e.x;
+                                let ddy = nearest.y - e.y;
+                                p.x = e.x;
+                                p.y = e.y;
+                                p.vx = (ddx/minDist) * 800;
+                                p.vy = (ddy/minDist) * 800;
+                            } else {
+                                p.active = false;
+                            }
+                        }
+                        
+                        if (p.hitEnemies.size >= p.penetration) {
+                            p.active = false;
+                            break;
+                        }
                     }
                 }
             }

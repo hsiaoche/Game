@@ -36,6 +36,62 @@ export const MazePhysics = {
         
         return collidables;
     },
+    checkPlatformCollisionX(entity) {
+        if (!MazeEntityManager.dropPlatforms) return;
+        MazeEntityManager.dropPlatforms.forEach(drop => {
+            if (drop.state === 'dropped') return;
+            if (this.checkAABB(entity, drop)) {
+                if (drop.state === 'idle') {
+                    drop.state = 'shaking';
+                    drop.timer = 0.6;
+                }
+                // Resolve X
+                if (entity.vx > 0) {
+                    entity.x = drop.x - entity.width;
+                    entity.vx = 0;
+                } else if (entity.vx < 0) {
+                    entity.x = drop.x + drop.width;
+                    entity.vx = 0;
+                }
+            }
+        });
+    },
+
+    checkPlatformCollisionY(entity) {
+        if (MazeEntityManager.dropPlatforms) {
+            MazeEntityManager.dropPlatforms.forEach(drop => {
+                if (drop.state === 'dropped') return;
+                if (this.checkAABB(entity, drop)) {
+                    if (drop.state === 'idle') {
+                        drop.state = 'shaking';
+                        drop.timer = 0.6; // 0.6 seconds to shake before dropping
+                    }
+                    // Resolve Y
+                    if (entity.vy > 0) {
+                        entity.y = drop.y - entity.height;
+                        entity.vy = 0;
+                        entity.isGrounded = true;
+                    } else if (entity.vy < 0) {
+                        entity.y = drop.y + drop.height;
+                        entity.vy = 0;
+                    }
+                }
+            });
+        }
+        
+        if (MazeEntityManager.bouncePads) {
+            MazeEntityManager.bouncePads.forEach(pad => {
+                if (this.checkAABB(entity, pad)) {
+                    if (entity.vy > 0 && entity.y + entity.height - entity.vy * 0.016 <= pad.y + 10) {
+                        entity.y = pad.y - entity.height;
+                        entity.vy = -650; // Moderated bounce
+                        entity.isGrounded = false;
+                    }
+                }
+            });
+        }
+    },
+
     resolveCollisionX(entity) {
         const rTop = Math.floor((entity.y + 2) / TILE_SIZE);
         const rBottom = Math.floor((entity.y + entity.height - 2) / TILE_SIZE);
@@ -59,6 +115,8 @@ export const MazePhysics = {
                 loop++;
             }
         }
+        
+        this.checkPlatformCollisionX(entity);
     },
 
     resolveCollisionY(entity) {
@@ -85,6 +143,8 @@ export const MazePhysics = {
                 loop++;
             }
         }
+        
+        this.checkPlatformCollisionY(entity);
     },
     
     checkAABB(a, b, shrink = 0) {

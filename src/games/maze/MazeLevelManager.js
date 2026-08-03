@@ -2,11 +2,11 @@ import { MazeEntityManager } from './MazeEntityManager.js';
 import { Player } from './entities/Player.js';
 import { loadMap } from './Map.js';
 import { Renderer } from '../../engine/renderer/Renderer.js';
-import { level1, level2, level3, level4, level5, level6, level7, level8, level9, level10 } from './levels.js';
+import { level1, level2, level3, level4, level5 } from './levels.js';
 import { SaveManager } from '../../shared/storage/SaveManager.js';
 
 export const MazeLevelManager = {
-    levels: [level1, level2, level3, level4, level5, level6, level7, level8, level9, level10],
+    levels: [level1, level2, level3, level4, level5],
     currentLevelIndex: 0,
     currentLevelData: null,
     currentRespawnPos: null,
@@ -33,7 +33,7 @@ export const MazeLevelManager = {
         
         Renderer.rebuildCache(this.currentLevelData.layout);
         MazeEntityManager.init(new Player());
-        MazeEntityManager.loadSaws(mapInfo.sawConfigs);
+        MazeEntityManager.loadMapEntities(mapInfo);
         MazeEntityManager.player.init(this.currentRespawnPos);
         return true;
     },
@@ -70,15 +70,15 @@ export const MazeLevelManager = {
     
     resetLevel() {
         MazeEntityManager.init(new Player());
-        const { startPos, sawConfigs } = loadMap(this.currentLevelData);
-        MazeEntityManager.loadSaws(sawConfigs);
+        const mapInfo = loadMap(this.currentLevelData);
+        MazeEntityManager.loadMapEntities(mapInfo);
         Renderer.rebuildCache(this.currentLevelData.layout);
         
         if (!this.initialStartPos) {
-            this.initialStartPos = { ...startPos };
+            this.initialStartPos = { ...mapInfo.startPos };
         }
         if (!this.checkpointPos) {
-            this.checkpointPos = { ...startPos };
+            this.checkpointPos = { ...mapInfo.startPos };
         }
         
         MazeEntityManager.player.init(this.checkpointPos);

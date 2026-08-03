@@ -6,10 +6,31 @@
 
 ## [Unreleased]
 
+### Added (Phase 3-5: Monster Survival Overhaul)
+- **15 New Skills & Synergies** (`SkillsDB.js`, `SkillManager.js`):
+  - Added Magic Missile, Fireball, Ice Spike, Chain Lightning, Boomerang, Poison Dart, Fire Aura, Poison Mist, Frost Nova, Tornado, Laser, Drone, Turret, Energy Shield, Spikes.
+  - Implemented complex synergy mechanics (e.g., Flaming Tornados, Toxic Explosions).
+- **8 Distinct Enemy Types** (`Enemy.js`):
+  - Runner, Tank, Shooter, Bomber, Summoner, Healer, Shielder, Slime.
+  - Added behaviors like fleeing, detonating, healing, shielding.
+- **The Void Construct Boss** (`Enemy.js`, `WaveManager.js`):
+  - 3-Phase boss spawning at the 5-minute mark.
+  - Features bullet spread, dash attacks, and massive bullet-hell lasers.
+- **Wave Generation & Endless Scaling** (`WaveManager.js`):
+  - Procedurally ramping difficulty curve up to Wave 10.
+  - Uncapped scaling for endless survival after the boss spawns.
+- **Extended Projectile Systems** (`Projectile.js`):
+  - Supported advanced projectile behaviors: pierce, boomerang, stationary, stretchToV, turret spawners.
+
+### Changed (Phase 1-2: Maze Platformer Overhaul)
+- **Dynamic Physics Engine** (`MazePhysics.js`, `MazeEntityManager.js`):
+  - Added Bounce Pads and Shaking/Dropping Platforms.
+  - Added Portal system for intra-level teleportation.
+- **5 High-Quality Levels** (`levels.js`):
+  - Replaced 10 mundane levels with 5 specialized levels (Tutorial, Speed Run, Vertical Ascent, Teleporter Maze, Boss Gauntlet).
+
 ### 預定重構與優化 (Planned)
-- 重構 `SurvivalSceneManager.js` 與 `MazeSceneManager.js`，將 Canvas 繪製邏輯抽離至獨立的 Renderer。
 - 優化 `UIEngine.updateHUD`，導入 Dirty Flag 機制以減少不必要的 DOM 操作 (解決 DOM Thrashing 問題)。
-- 優化關卡設計，為 Maze Platformer 的高難度關卡 (Level 6-10) 加入安全平台與 Checkpoint。
 
 ## [2.0.0-beta] - 2026-07-29
 

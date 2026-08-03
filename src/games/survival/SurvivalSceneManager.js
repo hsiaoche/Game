@@ -143,7 +143,14 @@ export class SurvivalGameplayScene {
             for (let p of SurvivalEntityManager.projectilePool.getActiveObjects()) {
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = Math.min(1, p.life * 2);
-                if (p.size > 20) {
+                if (p.stretchToV) {
+                    ctx.save();
+                    ctx.translate(p.x - CameraState.x, p.y - CameraState.y);
+                    ctx.rotate(Math.atan2(p.vy, p.vx));
+                    let len = Math.sqrt(p.vx*p.vx + p.vy*p.vy) * 0.1;
+                    ctx.fillRect(-len, -p.size/2, len*2, p.size);
+                    ctx.restore();
+                } else if (p.size > 20) {
                     ctx.beginPath();
                     ctx.arc(p.x - CameraState.x, p.y - CameraState.y, p.size/2, 0, Math.PI*2);
                     ctx.fill();
